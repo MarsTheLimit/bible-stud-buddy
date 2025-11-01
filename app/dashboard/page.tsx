@@ -276,7 +276,7 @@ export default function Dashboard() {
                             <button className="btn btn-primary" onClick={connectGoogle}>Connect Google Calendar</button>
                           ) : (
                             <>
-                              {(accountData.tokens_left >= 2000) ? (<span>You can make about {Math.ceil(accountData.tokens_left / 5000)} new planners this month</span>):
+                              {(accountData?.tokens_left >= 2000) ? (<span>You can make about {Math.ceil(accountData.tokens_left / 5000)} new planners this month</span>):
                               (
                                 <span>You can&apos;t make any new planners this month</span>
                               )}

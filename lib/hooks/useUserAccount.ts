@@ -38,9 +38,9 @@ export function useUserAccount() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  function setData(data: unknown) {
+  function setData(data: UserAccount) {
     setAccountData(data);
-    setSchedulePrefs(data.schedule_prefs);
+    setSchedulePrefs(data.schedule_prefs as SchedulePrefs);
     setPlanners(data.planners);
   }
 
@@ -135,7 +135,9 @@ export function useUserAccount() {
         .select(DATA_SELECTION)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       setData(data);
       return data;
     } catch (err) {
