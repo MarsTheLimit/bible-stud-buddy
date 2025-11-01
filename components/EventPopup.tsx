@@ -24,19 +24,12 @@ interface EventPopupProps {
   isPersonal: boolean;
 }
 
-export default function EventPopup({
-  show,
-  onClose,
-  event,
-  isCreator,
-  supabase,
-  isPersonal = false,
-}: EventPopupProps) {
-  if (!event) return null;
-
+export default function EventPopup({ show, onClose, event, isCreator, supabase, isPersonal = false, }: EventPopupProps) {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [showNotifyPopup, setShowNotifyPopup] = useState(false);
   const [notificationDetails, setNotificationDetails] = useState("");
+
+  if (!event) return null;
 
   // Format dates/times
   const date = new Date(event.start);

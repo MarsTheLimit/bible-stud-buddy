@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   try {
     const events = await fetchAllGoogleEvents(supabase, user.id);
     return NextResponse.json({ events });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching Google events:", error);
     return NextResponse.json(
       { error: error.message || "Unknown error" },

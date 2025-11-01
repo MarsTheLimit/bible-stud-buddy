@@ -1,6 +1,6 @@
 import { supabase } from "../lib/supabaseClient";
 
-export async function getServerSideProps({ req }) {
+export async function getServerSideProps({}) {
   const {
     data: { session },
   } = await supabase.auth.getSession();

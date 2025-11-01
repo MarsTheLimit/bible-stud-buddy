@@ -53,7 +53,7 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
           <div className="mb-5">
             <h2 className="mb-3" style={subheadingStyle}>1. Introduction</h2>
             <p>
-              {companyName} ("us", "we", or "our") operates the {websiteName} website (the "Service").
+              {companyName} (&quot;us&quot;, &quot;we&quot;, or &quot;our&quot;) operates the {websiteName} website (the &quot;Service&quot;).
               This page informs you of our policies regarding the collection, use, and disclosure of Personal Data when you use our Service. By using the Service, you agree to the collection and use of information in accordance with this policy.
             </p>
           </div>
@@ -66,7 +66,7 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
             </p>
             <h3 className="mb-2 text-primary">Personal Data</h3>
             <p>
-              While using our Service, we may ask you to provide us with certain personally identifiable information ("Personal Data"), including:
+              While using our Service, we may ask you to provide us with certain personally identifiable information (&quot;Personal Data&quot;), including:
             </p>
             <ul>
               <li>Email address</li>
@@ -75,7 +75,7 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
 
             <h3 className="mb-2 mt-4 text-primary">Usage Data</h3>
             <p>
-              We may also collect information that your browser sends whenever you visit our Service, such as your computer's Internet Protocol address (e.g., IP address), browser type, time spent on pages, and other diagnostic data.
+              We may also collect information that your browser sends whenever you visit our Service, such as your computer&apos;s Internet Protocol address (e.g., IP address), browser type, time spent on pages, and other diagnostic data.
             </p>
           </div>
 
@@ -104,10 +104,10 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
               We use Vercel Analytics to monitor website performance and traffic. Vercel Analytics collects non-personal, aggregated data such as page views, load times, and referrer URLs to help us understand how users engage with our site and to improve reliability and speed.
             </p>
             <p>
-              Vercel Analytics does not use cookies, store personally identifiable information, or track users across sites. All data collected is anonymized and processed in accordance with <a href="https://vercel.com/legal/privacy-policy" target="_blank">Vercel's Privacy Policy</a>.
+              Vercel Analytics does not use cookies, store personally identifiable information, or track users across sites. All data collected is anonymized and processed in accordance with <a href="https://vercel.com/legal/privacy-policy" target="_blank">Vercel&apos;s Privacy Policy</a>.
             </p>
             <p>
-              We use Stripe, a third-party payment processor, to handle all transactions securely. When you make a purchase or payment through our website, your payment information is processed directly by Stripe and is subject to <a href="https://stripe.com/privacy" target="_blank">Stripe's Privacy Policy</a>.
+              We use Stripe, a third-party payment processor, to handle all transactions securely. When you make a purchase or payment through our website, your payment information is processed directly by Stripe and is subject to <a href="https://stripe.com/privacy" target="_blank">Stripe&apos;s Privacy Policy</a>.
             </p><p>
               We do not store or have access to your full payment details, such as your credit card number or bank account information. Stripe may collect and process information such as your name, email address, billing address, and payment method to complete the transaction and prevent fraud.
             </p><p>

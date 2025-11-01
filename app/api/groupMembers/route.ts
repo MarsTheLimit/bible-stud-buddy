@@ -24,10 +24,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const users = members?.map((m: any) => m.user) ?? [];
+    const users = members?.map((m: unknown) => m.user) ?? [];
 
     return NextResponse.json({ users });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

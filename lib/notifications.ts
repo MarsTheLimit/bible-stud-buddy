@@ -1,4 +1,4 @@
-export async function getGroupNotifs(supabase : any, groupId: string) {
+export async function getGroupNotifs(supabase : unknown, groupId: string) {
     const { data, error } = await supabase
         .from("user_messages")
         .select("*")
@@ -9,11 +9,11 @@ export async function getGroupNotifs(supabase : any, groupId: string) {
 }
 
 export async function createNotif(
-  supabase: any,
-  group: any,
-  event: any,
+  supabase: unknown,
+  group: unknown,
+  event: unknown,
   msg_type: "group_alert" | "prayer_req" | "absent",
-  details: any | null="",
+  details: unknown | null="",
   anonymous: boolean=true
 ) {
   const { data, error: userError } = await supabase.auth.getUser();
@@ -26,7 +26,7 @@ export async function createNotif(
   const now = new Date().toISOString();
 
   // --- Build message content based on msg_type ---
-  let msg_content: any;
+  let msg_content: unknown;
 
   switch (msg_type) {
     case "group_alert":
@@ -84,7 +84,7 @@ export async function createNotif(
   return notif;
 }
 
-export async function getGroupNotifications(supabase: any, groupIds:string[]) {
+export async function getGroupNotifications(supabase: unknown, groupIds:string[]) {
   if (!groupIds || groupIds.length === 0) {
     console.log("Waiting for groups to load...");
     return;
@@ -106,7 +106,7 @@ export async function getGroupNotifications(supabase: any, groupIds:string[]) {
   }
 
   // Parse msg_content (since it's JSONB)
-  const parsed = data.map((n: any) => ({
+  const parsed = data.map((n: unknown) => ({
     ...n,
     msg_content:
       typeof n.msg_content === "string"
@@ -117,7 +117,7 @@ export async function getGroupNotifications(supabase: any, groupIds:string[]) {
   return parsed;
 }
 
-export async function isUserGroupOwner(supabase: any, userId: string, groupId: string) {
+export async function isUserGroupOwner(supabase: unknown, userId: string, groupId: string) {
   if (!groupId || !userId) return false;
 
   const { data, error } = await supabase

@@ -1,4 +1,4 @@
-export async function getGroupEvents(supabase: any, groupId: string | null) {
+export async function getGroupEvents(supabase: unknown, groupId: string | null) {
   let query = supabase.from("events").select("*").order("date", { ascending: true });
 
   if (groupId) {
@@ -16,7 +16,7 @@ export async function getGroupEvents(supabase: any, groupId: string | null) {
 }
 
 export async function isUserEventCreator(
-  supabase: any,
+  supabase: unknown,
   userId: string,
   eventId: string
 ): Promise<boolean> {
@@ -36,7 +36,7 @@ export async function isUserEventCreator(
   return data?.created_by === userId;
 }
 
-export async function getGroupFromEvent(supabase: any, eventId: string, justName: boolean=false) {
+export async function getGroupFromEvent(supabase: unknown, eventId: string, justName: boolean=false) {
   const { data, error } = await supabase
     .from("events")
     .select("group_id, groups(name)")
@@ -51,7 +51,7 @@ export async function getGroupFromEvent(supabase: any, eventId: string, justName
   else return data || null;
 }
 
-export async function createEvent(supabase : any, groupId: string | null, title: string, description: string, date: string, endDate : string) {
+export async function createEvent(supabase : unknown, groupId: string | null, title: string, description: string, date: string, endDate : string) {
   const user = (await supabase.auth.getUser()).data.user;
   if (!user) throw new Error("Not logged in");
 
@@ -65,27 +65,27 @@ export async function createEvent(supabase : any, groupId: string | null, title:
   return data;
 }
 
-export async function deleteEvent(supabase : any, eventId: string) {
+export async function deleteEvent(supabase : unknown, eventId: string) {
   const { error } = await supabase.from("events").delete().eq("id", eventId);
   if (error) throw error;
 }
 
 
 export async function loadEvents(
-  supabase: any, 
+  supabase: unknown, 
   isPersonal: boolean, 
-  user: any, 
+  user: unknown, 
   groupIds: string[], 
-  accountData: any, 
-  setGoogleEvents: ((events: any) => void) | null, 
-  setEvents: (events: any) => void | null,
+  accountData: unknown, 
+  setGoogleEvents: ((events: unknown) => void) | null, 
+  setEvents: (events: unknown) => void | null,
   maxDate: Date | null = null,
   proAccess: boolean | null = true
 ) {
   try {
-    let combinedEvents: any[] = [];
+    let combinedEvents: unknown[] = [];
 
-    const filterByDateRange = (events: any[]) => {
+    const filterByDateRange = (events: unknown[]) => {
       if (!maxDate) return events;
 
       const now = new Date();
@@ -102,7 +102,7 @@ export async function loadEvents(
     if (isPersonal) {
       const personalData = await getGroupEvents(supabase, null);
       const personalMapped = await Promise.all(
-        personalData.map(async (e: any, idx: number) => ({
+        personalData.map(async (e: unknown, idx: number) => ({
           id: e.id,
           title: e.title,
           details: e.description,
@@ -122,7 +122,7 @@ export async function loadEvents(
         for (const gid of groupIds) {
           const groupData = await getGroupEvents(supabase, gid);
           const groupMapped = await Promise.all(
-            groupData.map(async (e: any, idx: number) => {
+            groupData.map(async (e: unknown, idx: number) => {
               const groupName = await getGroupFromEvent(supabase, e.id, true);
               return {
                 id: e.id,
@@ -156,7 +156,7 @@ export async function loadEvents(
 
             if (res.ok) {
               const data = await res.json();
-              const googleMapped = data.events.map((e: any, idx: number) => ({
+              const googleMapped = data.events.map((e: unknown, idx: number) => ({
                 id: e.id,
                 title: `${e.title} (Google Calendar)`,
                 start: new Date(e.start),
@@ -186,7 +186,7 @@ export async function loadEvents(
         const firstGroupId = groupIds[0];
         const groupData = await getGroupEvents(supabase, firstGroupId);
         const groupMapped = await Promise.all(
-          groupData.map(async (e: any, idx: number) => {
+          groupData.map(async (e: unknown, idx: number) => {
             const groupName = await getGroupFromEvent(supabase, e.id, true);
             return {
               id: e.id,

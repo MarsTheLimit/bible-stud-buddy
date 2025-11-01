@@ -11,9 +11,18 @@ import EventInput from "./EventInput";
 import EventPopup from "./EventPopup";
 import { useUserAccount } from "@/lib/hooks/useUserAccount";
 
-const locales = {
-  "en-US": require("date-fns/locale/en-US"),
+const locales: Record<string, unknown> = {
+  "en-US": (await import("date-fns/locale/en-US")).default,
 };
+
+const LoadingSpinner = () => (
+    <div className="text-center py-5">
+      <Spinner animation="border" role="status" variant="primary" className="mb-3">
+        <span className="visually-hidden">Loading...</span>
+      </Spinner>
+      <p className="text-muted">Loading calendar events...</p>
+    </div>
+  );
 
 const localizer = dateFnsLocalizer({
   format,
@@ -38,16 +47,13 @@ export default function EventsCalendar({
         supabase,
         user, 
         accountData, 
-        loading, 
-        accessLevel, 
-        hasActiveTrial,
-        hasProAccess, 
-        calendarUsed
+        loading,
+        hasProAccess,
     } = useUserAccount();
     const [view, setView] = useState<View>("month");
     const [date, setDate] = useState(new Date());
-    const [events, setEvents] = useState<any[]>([]);
-    const [googleEvents, setGoogleEvents] = useState<any[]>([]);
+    const [events, setEvents] = useState<unknown[]>([]);
+    const [googleEvents, setGoogleEvents] = useState<unknown[]>([]);
     const [showGoogleEvents, setShowGoogleEvents] = useState(true);
     const [newEvent, setNewEvent] = useState({
         title: "",
@@ -56,7 +62,7 @@ export default function EventsCalendar({
         endDate: "",
         multiDay: false,
     });
-    const [selectedEvent, setSelectedEvent] = useState<any>(null);
+    const [selectedEvent, setSelectedEvent] = useState<unknown>(null);
     const [showPopup, setShowPopup] = useState(false);
     const [showEventPopup, setEventShowPopup] = useState(false);
 
@@ -101,7 +107,7 @@ export default function EventsCalendar({
   if (accountData && !loading) {
     fetchEvents();
   }
-}, [groupIds, accountData, loading]);
+}, [groupIds, accountData, loading, supabase, isPersonal, user, hasProAccess]);
 
   const handleNavigate = (newDate: Date) => setDate(newDate);
   const handleViewChange = (newView: View) => setView(newView);
@@ -113,15 +119,6 @@ export default function EventsCalendar({
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
     return start < end;
   }
-
-  const LoadingSpinner = () => (
-    <div className="text-center py-5">
-      <Spinner animation="border" role="status" variant="primary" className="mb-3">
-        <span className="visually-hidden">Loading...</span>
-      </Spinner>
-      <p className="text-muted">Loading calendar events...</p>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">

@@ -1,4 +1,5 @@
 import ContactForm from "@/components/ContactForm";
+import Image from 'next/image';
 
 export default function Home() {
   return (
@@ -37,14 +38,11 @@ export default function Home() {
                   margin: "0 auto",
                 }}
               >
-                <img
+                <Image
                   src="/profile.png"
                   alt="App preview"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
+                  fill
+                  style={{ objectFit: 'cover' }}
                 />
               </div>
             </div>
@@ -63,10 +61,12 @@ export default function Home() {
               </p>
             </div>
             <div className="col-md-6 text-center">
-              <img
+              <Image
                 src="/dashboard-preview.png"
                 alt="Dashboard preview"
-                className="img-fluid rounded shadow"
+                width={800} // adjust width as needed
+                height={600} // adjust height as needed
+                className="rounded shadow"
               />
             </div>
           </div>

@@ -63,7 +63,7 @@ export async function fetchAllGoogleEvents(
     if (fetchError || !userData)
         throw new Error("User or token data not found in Supabase.");
 
-    let {
+    const {
         google_access_token: currentAccessToken,
         google_refresh_token: refreshToken,
         google_token_expires_at: tokenExpiryDateStr,
@@ -118,7 +118,7 @@ export async function fetchAllGoogleEvents(
     
     const calendarIds = filteredCalendars.map((c) => c.id).filter((id): id is string => !!id);
 
-    const allEvents: any[] = [];
+    const allEvents: unknown[] = [];
 
     // --- 5. Fetch all events ---
     for (const calId of calendarIds) {
@@ -143,7 +143,7 @@ export async function fetchAllGoogleEvents(
                     "UTC";
 
                 allEvents.push(
-                    ...res.data.items.map((e: any) => {
+                    ...res.data.items.map((e: unknown) => {
                         const isAllDay = !!e.start?.date && !e.start?.dateTime;
 
                         let startDate: Date | null = null;
@@ -206,7 +206,7 @@ export async function syncEventsToGoogleCalendar(
   if (fetchError || !userData)
     throw new Error("User or token data not found in Supabase.");
 
-  let {
+  const {
     google_access_token: currentAccessToken,
     google_refresh_token: refreshToken,
     google_token_expires_at: tokenExpiryDateStr,

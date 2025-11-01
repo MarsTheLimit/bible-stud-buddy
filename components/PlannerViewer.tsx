@@ -11,22 +11,7 @@ export default function PlannerViewer({ userId }: { userId: string }) {
   const [planners, setPlanners] = useState<Planner[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function fetchPlanners() {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("planners")
-        .select("id, name")
-        .eq("owned_by", userId);
-
-      if (error) throw error;
-      setPlanners(data || []);
-    } catch (err) {
-      console.error("Failed to fetch planners:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  
 
   async function handleDeletePlanner(plannerId: string) {
     try {
@@ -45,6 +30,23 @@ export default function PlannerViewer({ userId }: { userId: string }) {
   }
 
   useEffect(() => {
+    async function fetchPlanners() {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("planners")
+          .select("id, name")
+          .eq("owned_by", userId);
+
+        if (error) throw error;
+        setPlanners(data || []);
+      } catch (err) {
+        console.error("Failed to fetch planners:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
     fetchPlanners();
   }, [userId]);
 

@@ -12,7 +12,7 @@ export async function POST(req: Request) {
         await supabase.from("contact_messages").insert([{ name, email, message }]);
 
         return NextResponse.json({ success: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error(error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

@@ -24,7 +24,7 @@ export default function EventInput({ onChange }: { onChange: (title : string, de
     
     try {
       const startUTC = new Date(`${d}T${t}`).toISOString();
-      var endUTC = "";
+      const endUTC = "";
       if (!multiDay) { 
         endUTC = et ? new Date(`${d}T${et}`).toISOString() : startUTC;
       } else {

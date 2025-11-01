@@ -180,10 +180,7 @@ export default function PreferencesPopupObject({ show, onHide, data, onEdit }: J
 // Example usage component
 export function PreferencesPopup({ onEdit }: {onEdit: () => void }) {
   const [showPopup, setShowPopup] = React.useState(false);
-  const { 
-      supabase,
-      user, 
-      accountData, 
+  const {
       schedulePrefs,
       loading
     } = useUserAccount();

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   try {
     await syncEventsToGoogleCalendar(supabase, user.id, events, calendarName);
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Google sync error:", error);
     return NextResponse.json({ error: error.message || "Sync failed" }, { status: 500 });
   }

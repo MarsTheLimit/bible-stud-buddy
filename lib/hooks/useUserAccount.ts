@@ -10,7 +10,7 @@ type UserAccount = {
   stripe_customer_id: string | null;
   google_access_token: string | null;
   google_refresh_token: string | null;
-  schedule_prefs: any | null;
+  schedule_prefs: unknown | null;
   planners: string[];
   tokens_left: number;
 };
@@ -18,7 +18,7 @@ type UserAccount = {
 type SchedulePrefs = {
   morning_person: boolean;
   busyness: string;
-  least_busy_days: any | null;
+  least_busy_days: unknown | null;
   school_work: {type: string, hours: string} | null;
   earliest_awake: string | null;
   latest_asleep: string | null;
@@ -38,7 +38,7 @@ export function useUserAccount() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  function setData(data: any) {
+  function setData(data: unknown) {
     setAccountData(data);
     setSchedulePrefs(data.schedule_prefs);
     setPlanners(data.planners);
@@ -147,7 +147,7 @@ export function useUserAccount() {
   }
 
   function getUserCalendar() {
-    var calendarsUsed = [];
+    const calendarsUsed = [];
     if (accountData?.google_access_token != null) {
       calendarsUsed.push('google');
     }

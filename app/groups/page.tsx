@@ -54,7 +54,7 @@ export default function GroupsPage() {
       setMessageError(false);
       setMessage(`Successfully created '${group.name}'! Join code: ${group.join_code}`);
       setGroupCount(groupCount + 1);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setMessageError(true);
       setMessage(err.message);
     }
@@ -68,7 +68,7 @@ export default function GroupsPage() {
       const group = await joinGroup(supabase, joinCode.toUpperCase());
       setMessageError(false);
       setMessage(`Successfully joined ${group.name}!`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setMessageError(true);
       setMessage(err.message);
     }

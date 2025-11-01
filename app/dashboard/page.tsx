@@ -41,9 +41,7 @@ export default function Dashboard() {
     supabase,
     user, 
     accountData, 
-    loading, 
-    accessLevel, 
-    hasActiveTrial,
+    loading,
     hasProAccess,
     calendarUsed,
     schedulePrefs,
@@ -55,7 +53,7 @@ export default function Dashboard() {
   const [groupIds, setGroupIds] = useState<string[]>([]);
   const [fetching, setFetching] = useState(false);
   const [activeTab, setActiveTab] = useState<'alerts' | 'calendar' | 'chat' | 'groups'>('alerts');
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<unknown[]>([]);
   const [calendarKey, setCalendarKey] = useState(0); // Key to force remount calendar
 
   // Redirect if not logged in
@@ -280,7 +278,7 @@ export default function Dashboard() {
                             <>
                               {(accountData.tokens_left >= 2000) ? (<span>You can make about {Math.ceil(accountData.tokens_left / 5000)} new planners this month</span>):
                               (
-                                <span>You can't make any new planners this month</span>
+                                <span>You can&apos;t make any new planners this month</span>
                               )}
                               { (schedulePrefs === null) ? (
                                 <PreferencesInput onSubmit={async (prefs) => {
@@ -366,7 +364,7 @@ function PreferencesInput({
     other_info: null,
   });
 
-  const handleChange = (field: keyof Preferences, value: any) => {
+  const handleChange = (field: keyof Preferences, value: unknown) => {
     const updated = { ...prefs, [field]: value };
     setPrefs(updated);
   };

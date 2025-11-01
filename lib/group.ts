@@ -1,5 +1,5 @@
-export async function createGroup(supabase: any, groupName: string) {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+export async function createGroup(supabase: unknown, groupName: string) {
+  const { data: userData } = await supabase.auth.getUser();
   const user = userData?.user;
   if (!user) throw new Error("You must be logged in to create a group.");
 
@@ -36,8 +36,8 @@ export async function createGroup(supabase: any, groupName: string) {
 }
 
 
-export async function joinGroup(supabase: any, joinCode: string) {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+export async function joinGroup(supabase: unknown, joinCode: string) {
+  const { data: userData } = await supabase.auth.getUser();
   const user = userData?.user;
   if (!user) throw new Error("Not logged in");
 
@@ -71,7 +71,7 @@ export async function joinGroup(supabase: any, joinCode: string) {
   return group;
 }
 
-export async function ensureUserProfile(supabase: any, userId: string, email: string) {
+export async function ensureUserProfile(supabase: unknown, userId: string, email: string) {
   const { data: existingProfile } = await supabase
     .from("profiles")
     .select("id")
@@ -83,7 +83,7 @@ export async function ensureUserProfile(supabase: any, userId: string, email: st
   }
 }
 
-export async function getUserGroups(supabase: any) {
+export async function getUserGroups(supabase: unknown) {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   const user = userData?.user;
   if (!user) return [];
@@ -107,8 +107,8 @@ export async function getUserGroups(supabase: any) {
   if (!userGroups) return [];
 
   return userGroups
-    .filter((ug: any) => ug.group_data)
-    .map((ug: any) => ({
+    .filter((ug: unknown) => ug.group_data)
+    .map((ug: unknown) => ({
       id: ug.group_data.id,
       name: ug.group_data.name,
       join_code: ug.group_data.join_code,

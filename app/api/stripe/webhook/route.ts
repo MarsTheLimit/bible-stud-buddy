@@ -143,7 +143,7 @@ export async function POST(req: Request) {
     }
 
     return new NextResponse(JSON.stringify({ received: true }), { status: 200 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Error handling webhook event:', err);
     return new NextResponse(`Webhook handler failed: ${err.message}`, { status: 500 });
   }

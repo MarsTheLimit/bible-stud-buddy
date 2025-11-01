@@ -3,10 +3,10 @@
 import { useUserAccount } from "@/lib/hooks/useUserAccount";
 import { getGroupNotifications, isUserGroupOwner } from "@/lib/notifications";
 import { useEffect, useState } from "react";
-import { Card, Spinner, Button } from "react-bootstrap";
+import { Spinner } from "react-bootstrap";
 
 // --- Helper to delete notification ---
-async function deleteNotification(supabase: any, id: number) {
+async function deleteNotification(supabase: unknown, id: number) {
   const { error } = await supabase.from("user_messages").delete().eq("id", id);
   if (error) {
     console.error("Error deleting notification:", error);
@@ -39,15 +39,15 @@ export default function NotificationViewer({ groupIds }: { groupIds: string[] })
   const [deleting, setDeleting] = useState<number | null>(null);
 
   useEffect(() => {
+    async function fetchNotifications() {
+      const notifications = await getGroupNotifications(supabase, groupIds);
+      console.log("Fetched notifications:", notifications);
+      setNotifications(notifications);
+    }
+
     if (!groupIds || groupIds.length === 0) return;
     fetchNotifications();
-  }, [groupIds]);
-
-  async function fetchNotifications() {
-    const notifications = await getGroupNotifications(supabase, groupIds);
-    console.log("Fetched notifications:", notifications);
-    setNotifications(notifications);
-  }
+  }, [groupIds, supabase]);
 
   async function handleDelete(id: number) {
     setDeleting(id);
@@ -97,7 +97,7 @@ function NotificationCardWrapper({
 }: {
   notif: Notification;
   userId?: string;
-  supabase: any;
+  supabase: unknown;
   onDelete: (id: number) => void;
   deleting: boolean;
 }) {
@@ -144,7 +144,7 @@ function NotificationCard({
 
   let border = "";
   let headerBg = "";
-  let textColor = "text-dark";
+  const textColor = "text-dark";
 
   switch (msg_type) {
     case "group_alert":

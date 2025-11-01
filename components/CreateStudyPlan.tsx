@@ -6,11 +6,11 @@ import { updateUserTokens } from "@/lib/hooks/useUserAccount";
 
 interface ScheduleResponse {
     message: string;
-    scheduleEvents: any[];
+    scheduleEvents: unknown[];
     usage: number;
 }
 
-export default function CreateStudyPlan({ schedulePrefs, onSubmit, user, refresh, tokensLeft }: { schedulePrefs: any, userEvents: any[], onSubmit: () => void, user: any, refresh: () => void, tokensLeft: number }) {
+export default function CreateStudyPlan({ schedulePrefs, onSubmit, user, refresh, tokensLeft }: { schedulePrefs: unknown, userEvents: unknown[], onSubmit: () => void, user: unknown, refresh: () => void, tokensLeft: number }) {
     const [title, setTitle] = useState('');
     const [studyArea, setStudyArea] = useState('');
     const [loading, setLoading] = useState(false);
@@ -66,7 +66,7 @@ export default function CreateStudyPlan({ schedulePrefs, onSubmit, user, refresh
                 console.log(`Updated user tokens: ${newTokenCount}`);
 
                 const newPlanner = await createPlanner(user.id, title);
-                const insertedEvents = await addEventsToPlanner(user.id, newPlanner.id, data.scheduleEvents);
+                await addEventsToPlanner(user.id, newPlanner.id, data.scheduleEvents);
 
                 await refresh();
 
@@ -83,7 +83,7 @@ export default function CreateStudyPlan({ schedulePrefs, onSubmit, user, refresh
 
     return (
         <div>
-            <div className="d-flex"><h3>Let's Get Started.</h3></div>
+            <div className="d-flex"><h3>Let&apos;s Get Started.</h3></div>
             <form onSubmit={handleCreateStudyPlan} style={{ padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
                 <div style={{ marginBottom: '15px' }}>
                     <label htmlFor="plan-title" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>

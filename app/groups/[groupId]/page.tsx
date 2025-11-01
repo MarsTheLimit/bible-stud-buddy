@@ -121,7 +121,7 @@ export default function GroupPage({ params }: { params: Promise<{ groupId: strin
     <div className="container py-5">
       <div className="bg-gradient rounded-2 p-5 shadow">
         <div className="text-center text-gradient p-2">
-          <h1>{group.name}'s Page</h1>
+          <h1>{group.name}&apos;s Page</h1>
         </div>
 
         <div className="row justify-content-center text-center mb-4">
