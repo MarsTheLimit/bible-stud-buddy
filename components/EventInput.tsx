@@ -47,7 +47,7 @@ export default function EventInput({ onChange }: { onChange: (title : string, de
           className="form-control mb-2"
         />
         <input
-          type="text"
+          type="textarea"
           placeholder="Event details"
           value={description}
           onChange={e => setDescription(e.target.value)}

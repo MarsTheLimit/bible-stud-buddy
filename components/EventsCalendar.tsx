@@ -1,12 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Modal } from "react-bootstrap";
+import { Button, Form, Modal, Spinner } from "react-bootstrap";
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 
-import { getGroupEvents, createEvent, isUserEventCreator, getGroupFromEvent } from "@/lib/groupEvents";
+import { createEvent, loadEvents } from "@/lib/groupEvents";
 import EventInput from "./EventInput";
 import EventPopup from "./EventPopup";
 import { useUserAccount } from "@/lib/hooks/useUserAccount";
@@ -23,7 +23,17 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-export default function EventsCalendar({groupIds,isCreator,isPersonal,}: {groupIds: string[]; isCreator: boolean; isPersonal: boolean;}) {
+export default function EventsCalendar({
+  groupIds,
+  isCreator,
+  isPersonal,
+  onEventAdded
+}: {
+  groupIds: string[];
+  isCreator: boolean;
+  isPersonal: boolean;
+  onEventAdded?: () => void;
+}) {
     const { 
         supabase,
         user, 
@@ -37,6 +47,8 @@ export default function EventsCalendar({groupIds,isCreator,isPersonal,}: {groupI
     const [view, setView] = useState<View>("month");
     const [date, setDate] = useState(new Date());
     const [events, setEvents] = useState<any[]>([]);
+    const [googleEvents, setGoogleEvents] = useState<any[]>([]);
+    const [showGoogleEvents, setShowGoogleEvents] = useState(true);
     const [newEvent, setNewEvent] = useState({
         title: "",
         details: "",
@@ -47,6 +59,8 @@ export default function EventsCalendar({groupIds,isCreator,isPersonal,}: {groupI
     const [selectedEvent, setSelectedEvent] = useState<any>(null);
     const [showPopup, setShowPopup] = useState(false);
     const [showEventPopup, setEventShowPopup] = useState(false);
+
+    const [loadingEvents, setLoadingEvents] = useState(false)
 
   async function handleAddEvent() {
     if (!newEvent.title || !newEvent.date) return;
@@ -64,136 +78,30 @@ export default function EventsCalendar({groupIds,isCreator,isPersonal,}: {groupI
 
     setNewEvent({ title: "", details: "", date: "", endDate: "", multiDay: false });
     setEventShowPopup(false);
-    await loadEvents();
-  }
-
-  async function loadEvents() {
-    try {
-      let combinedEvents: any[] = [];
-
-      // --- Personal events ---
-      if (isPersonal) {
-        const personalData = await getGroupEvents(supabase, null);
-        const personalMapped = await Promise.all(
-          personalData.map(async (e: any) => ({
-            id: e.id,
-            title: e.title,
-            details: e.description,
-            start: new Date(e.date),
-            end: new Date(e.end_date),
-            isPersonal: true,
-            isCreator: await isUserEventCreator(supabase, user.id, e.id),
-            backgroundColor: "#0cd64fff",
-            groupName: null,
-          }))
-        );
-        combinedEvents = [...combinedEvents, ...personalMapped];
-
-        // --- All group events for personal calendar ---
-        if (groupIds && groupIds.length > 0) {
-          for (const gid of groupIds) {
-            const groupData = await getGroupEvents(supabase, gid);
-            const groupMapped = await Promise.all(
-              groupData.map(async (e: any) => {
-                const groupName = await getGroupFromEvent(supabase, e.id);
-                return {
-                  id: e.id,
-                  title: groupName ? `${groupName} - ${e.title}` : e.title,
-                  details: e.description,
-                  start: new Date(e.date),
-                  end: new Date(e.end_date),
-                  isPersonal: false,
-                  isCreator: await isUserEventCreator(supabase, user.id, e.id),
-                  backgroundColor: "#3b92f6ff",
-                  groupName: groupName,
-                };
-              })
-            );
-            combinedEvents = [...combinedEvents, ...groupMapped];
-          }
-          
-          // Fetch Google Calendar events
-          if (accountData?.google_access_token) {
-            try {
-              // Check if user has an active session
-              const { data: { session } } = await supabase.auth.getSession();
-              console.log('Session exists:', !!session);
-              console.log('User ID:', user?.id);
-
-              const res = await fetch("/api/google/events", {
-                method: "POST",
-                credentials: 'include',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  access_token: accountData.google_access_token,
-                  refresh_token: accountData.google_refresh_token,
-                }),
-              });
-
-              console.log('Response status:', res.status);
-              console.log('Response ok:', res.ok);
-
-              if (!res.ok) {
-                const errorData = await res.json();
-                console.error('Google events fetch error:', errorData);
-                // Don't throw - just log and continue without Google events
-              } else {
-                const data = await res.json();
-                const googleMapped = data.events.map((e: any) => ({
-                  id: e.id,
-                  title: e.title,
-                  start: new Date(e.start),
-                  end: new Date(e.end),
-                  isPersonal: false,
-                  isCreator: false,
-                  backgroundColor: "#f4b400ff",
-                  groupName: e.calendarId !== "primary" ? e.calendarId : null,
-                }));
-
-                combinedEvents = [...combinedEvents, ...googleMapped];
-              }
-            } catch (error) {
-              console.error('Error fetching Google events:', error);
-              // Continue without Google events
-            }
-          }
-        }
-      } else {
-        // --- Group calendar: only first group ---
-        if (groupIds && groupIds.length > 0) {
-          const firstGroupId = groupIds[0];
-          const groupData = await getGroupEvents(supabase, firstGroupId);
-          const groupMapped = await Promise.all(
-            groupData.map(async (e: any) => {
-              const groupName = await getGroupFromEvent(supabase, e.id);
-              return {
-                id: e.id,
-                title: e.title,
-                details: e.description,
-                start: new Date(e.date),
-                end: new Date(e.end_date),
-                isPersonal: false,
-                isCreator: await isUserEventCreator(supabase, user.id, e.id),
-                backgroundColor: "#3b92f6ff",
-                groupName: groupName,
-              };
-            })
-          );
-          combinedEvents = [...combinedEvents, ...groupMapped];
-        }
-      }
-
-      setEvents(combinedEvents);
-    } catch (error) {
-      console.error("Error loading events:", error);
+    await loadEvents(supabase, isPersonal, user, groupIds, accountData, setGoogleEvents, setEvents);
+    
+    // Call the callback if provided
+    if (onEventAdded) {
+      onEventAdded();
     }
   }
 
+  // Combine events based on toggle
+  const displayedEvents = showGoogleEvents 
+    ? [...events, ...googleEvents] 
+    : events;
+
   useEffect(() => {
-    if (accountData && !loading) loadEvents();
-  }, [groupIds, accountData, loading]);
+  const fetchEvents = async () => {
+    setLoadingEvents(true);
+    await loadEvents(supabase, isPersonal, user, groupIds, accountData, setGoogleEvents, setEvents, null, hasProAccess);
+    setLoadingEvents(false);
+  };
+
+  if (accountData && !loading) {
+    fetchEvents();
+  }
+}, [groupIds, accountData, loading]);
 
   const handleNavigate = (newDate: Date) => setDate(newDate);
   const handleViewChange = (newView: View) => setView(newView);
@@ -206,6 +114,15 @@ export default function EventsCalendar({groupIds,isCreator,isPersonal,}: {groupI
     return start < end;
   }
 
+  const LoadingSpinner = () => (
+    <div className="text-center py-5">
+      <Spinner animation="border" role="status" variant="primary" className="mb-3">
+        <span className="visually-hidden">Loading...</span>
+      </Spinner>
+      <p className="text-muted">Loading calendar events...</p>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-7xl mx-auto">
@@ -213,9 +130,9 @@ export default function EventsCalendar({groupIds,isCreator,isPersonal,}: {groupI
           <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="d-flex">
+                <div className="d-flex align-items-center">
                   <h1 className="text-3xl font-bold">Calendar</h1>
-                  {(isCreator || isPersonal) && (
+                  {(isCreator || isPersonal) && !loadingEvents && (
                     <button
                       onClick={toggleEventShowPopup}
                       className="btn btn-outline-primary m-2"
@@ -225,12 +142,36 @@ export default function EventsCalendar({groupIds,isCreator,isPersonal,}: {groupI
                   )}
                 </div>
               </div>
+              
+              {/* Google Calendar Toggle */}
+              {isPersonal && accountData?.google_access_token && googleEvents.length > 0 && !loadingEvents && hasProAccess && (
+                <div className="form-check form-switch">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="googleCalendarToggle"
+                    checked={showGoogleEvents}
+                    onChange={(e) => setShowGoogleEvents(e.target.checked)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <label 
+                    className="form-check-label text-dark" 
+                    htmlFor="googleCalendarToggle"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    Show Google Calendar Events
+                  </label>
+                </div>
+              )}
             </div>
           </div>
           <div className="p-6">
-            <Calendar
+            {loadingEvents ? (
+              <LoadingSpinner />
+            ) : (
+              <Calendar
                 localizer={localizer}
-                events={events}
+                events={displayedEvents}
                 startAccessor="start"
                 endAccessor="end"
                 style={{ height: 500 }}
@@ -246,8 +187,34 @@ export default function EventsCalendar({groupIds,isCreator,isPersonal,}: {groupI
                     const backgroundColor = event.backgroundColor;
                     return { style: { backgroundColor, color: "black" } };
                 }}
-            />
+              />
+            )}
           </div>
+
+          { (isPersonal && hasProAccess && !loadingEvents) && (<div className="mt-2 p-2">
+            <h2>Data Syncing to Calendars</h2>
+            <p className="fw-light">Adds all events from this app to a new calendar in your calendar app</p>
+            <Form>
+              <Button
+                type="button"
+                id="sync-personal"
+                onClick={async (e) => {
+                    const res = await fetch("/api/google/sync", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        calendarName: "Bible Studdy Buddy Events",
+                        events: events,
+                      }),
+                    });
+
+                    const data = await res.json();
+                    // if (data.success) alert("Events synced!");
+                    // else alert("Failed to sync personal events");
+                }}
+              >Sync now</Button>
+            </Form>
+          </div>)}
         </div>
 
         {(isCreator || isPersonal) && (
@@ -281,7 +248,6 @@ export default function EventsCalendar({groupIds,isCreator,isPersonal,}: {groupI
         <EventPopup
           show={showPopup}
           onClose={() => setShowPopup(false)}
-          loadEvents={loadEvents}
           event={selectedEvent}
           isCreator={selectedEvent ? selectedEvent.isCreator : false}
           supabase={supabase}

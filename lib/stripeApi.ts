@@ -1,5 +1,3 @@
-// /lib/stripe-api.ts
-
 import { loadStripe } from "@stripe/stripe-js";
 import { Stripe } from "@stripe/stripe-js";
 
@@ -42,6 +40,7 @@ export async function redirectToSubscription(userId: string) {
 
     if (data.sessionUrl) {
         window.location.assign(data.sessionUrl);
+        
     } else {
         console.error('API Error:', data.error);
         alert('Failed to start subscription checkout. Please try again.');

@@ -45,6 +45,7 @@ export default function NotificationViewer({ groupIds }: { groupIds: string[] })
 
   async function fetchNotifications() {
     const notifications = await getGroupNotifications(supabase, groupIds);
+    console.log("Fetched notifications:", notifications);
     setNotifications(notifications);
   }
 

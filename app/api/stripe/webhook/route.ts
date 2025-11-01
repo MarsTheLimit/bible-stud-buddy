@@ -2,9 +2,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2023-10-16" });
 
 // IMPORTANT: Use the Service Role Key for secure server-side operations
 const supabaseAdmin = createClient(
@@ -12,14 +10,13 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_KEY!
 );
 
-console.log(process.env.NEXT_PUBLIC_SUPABASE_URL)
-console.log(process.env.SUPABASE_SERVICE_KEY)
-
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(req: Request) {
   const body = await req.text();
   const signature = req.headers.get('stripe-signature');
+
+  console.log("Webhook init")
 
   let event: Stripe.Event;
 
@@ -62,6 +59,7 @@ export async function POST(req: Request) {
           stripe_customer_id: session.customer as string, 
           trial_ends_at: null, // End the trial immediately if one was active
           trial_used: true,
+          tokens_left: 25_000,
         })
         .eq('id', userId);
 
@@ -71,6 +69,27 @@ export async function POST(req: Request) {
       }
       
       console.log(`User ${userId} successfully upgraded to Pro.`);
+      break;
+    }
+
+    case 'invoice.payment_succeeded' : {
+      const session = data as Stripe.Checkout.Session;
+      
+      // Get the user ID you passed in client_reference_id
+      const userId = session.client_reference_id;
+      const { error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({
+          tokens_left: 25_000,
+        })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('Supabase update failed on checkout.session.completed:', updateError);
+        return new NextResponse(`Database Error: ${updateError.message}`, { status: 500 });
+      }
+      
+      console.log(`User ${userId}'s tokens successfully renewed.`);
       break;
     }
     

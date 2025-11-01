@@ -6,6 +6,7 @@ import { use, useEffect, useState } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { createNotif } from "@/lib/notifications";
+import NotificationViewer from "@/components/NotificationViewer";
 
 interface Group {
   id: string;
@@ -24,7 +25,7 @@ export default function GroupPage({ params }: { params: Promise<{ groupId: strin
   const { groupId } = use(params);
   const { supabase } = useSupabase();
   const [group, setGroup] = useState<Group | null>(null);
-  const [creatorEmail, setCreatorEmail] = useState<string>("Unknown");
+  // const [creatorEmail, setCreatorEmail] = useState<string>("Unknown");
   const [loading, setLoading] = useState(true);
   const [usersInGroup, setUsersInGroup] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -52,13 +53,13 @@ export default function GroupPage({ params }: { params: Promise<{ groupId: strin
 
         setGroup(groupData);
 
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("email")
-          .eq("id", groupData.created_by)
-          .single();
+        // const { data: profileData } = await supabase
+        //   .from("profiles")
+        //   .select("email")
+        //   .eq("id", groupData.created_by)
+        //   .single();
 
-        setCreatorEmail(profileData?.email ?? "Unknown");
+        // setCreatorEmail(profileData?.email ?? "Unknown");
 
         const { data: { user: supabaseUser } } = await supabase.auth.getUser();
         if (supabaseUser) {
@@ -86,7 +87,7 @@ export default function GroupPage({ params }: { params: Promise<{ groupId: strin
   async function handlePrayerSubmit() {
     try {
         const groupInfo = {
-        id: groupId,
+        group_id: groupId,
         name: group?.name || "Unnamed Group",
         creator_id: group?.created_by,
         };
@@ -151,7 +152,9 @@ export default function GroupPage({ params }: { params: Promise<{ groupId: strin
 
         {/* Calendar */}
         <div>
-          <EventsCalendar groupIds={[groupId]} isCreator={group.created_by === currentUser?.id} isPersonal={false} />
+          <EventsCalendar groupIds={[groupId]} isCreator={group.created_by === currentUser?.id} isPersonal={false} /><br/>
+          <h2>Notifications</h2>
+          <NotificationViewer groupIds={[groupId]}/>
         </div>
       </div>
 

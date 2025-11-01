@@ -10,8 +10,8 @@ export async function getGroupNotifs(supabase : any, groupId: string) {
 
 export async function createNotif(
   supabase: any,
-  group: any,     // { id, name, creator_id, ... }
-  event: any,     // { id, title, ... }
+  group: any,
+  event: any,
   msg_type: "group_alert" | "prayer_req" | "absent",
   details: any | null="",
   anonymous: boolean=true
@@ -31,7 +31,7 @@ export async function createNotif(
   switch (msg_type) {
     case "group_alert":
       msg_content = {
-        title: `${group.name} Update`,
+        title: `${group.groups.name} Update`,
         content: details,
         datetime_sent: now,
         event: {
@@ -44,7 +44,7 @@ export async function createNotif(
 
     case "prayer_req":
       msg_content = {
-        title: `${anonymous ? "Anonymous " : "" }prayer request for ${anonymous ? "a member" : user.email || "a member"}`,
+        title: `${anonymous ? "Anonymous p" : "P" }rayer request for ${anonymous ? "a member" : user.email || "a member"}`,
         content: details || `No details provided`,
         datetime_sent: now,
       };
@@ -52,7 +52,7 @@ export async function createNotif(
 
     case "absent":
       msg_content = {
-        title: `${group.name} Absence`,
+        title: `${group.groups.name} Absence`,
         content: `${user.email || "A member"} won't be able to attend ${event?.title || "the event"}.`,
         datetime_sent: now,
       };
@@ -69,7 +69,7 @@ export async function createNotif(
     .insert([
       {
         sender: user.id,
-        recipient: group.id,
+        recipient: group.group_id,
         msg_type,
         msg_content, // stored as JSONB
       },

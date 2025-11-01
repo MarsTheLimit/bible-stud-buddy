@@ -45,7 +45,7 @@ export default function GroupsPage() {
     setMessage("");
     if (reachedGroupLimit) {
       setMessageError(true);
-      setMessage("You’ve reached the free plan limit. Upgrade to create more groups.");
+      setMessage("You've reached the free plan limit. Upgrade to create more groups.");
       return;
     }
 

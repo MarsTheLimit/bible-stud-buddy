@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSupabase } from '@/components/SupabaseProvider';
+import { supabase } from "@/lib/supabaseClient";
 
 type UserAccount = {
   account_type: 'free' | 'pro';
@@ -9,9 +10,22 @@ type UserAccount = {
   stripe_customer_id: string | null;
   google_access_token: string | null;
   google_refresh_token: string | null;
+  schedule_prefs: any | null;
+  planners: string[];
+  tokens_left: number;
 };
 
-const DATA_SELECTION = 'account_type, trial_ends_at, trial_used, stripe_subscription_id, stripe_customer_id, google_access_token, google_refresh_token'
+type SchedulePrefs = {
+  morning_person: boolean;
+  busyness: string;
+  least_busy_days: any | null;
+  school_work: {type: string, hours: string} | null;
+  earliest_awake: string | null;
+  latest_asleep: string | null;
+  other_info: string | null;
+}
+
+const DATA_SELECTION = 'account_type, trial_ends_at, trial_used, stripe_subscription_id, stripe_customer_id, google_access_token, google_refresh_token, schedule_prefs, planners, tokens_left'
 
 // Also update the Partial type to include the new fields
 type UserAccountUpdates = Partial<UserAccount & { id?: string }>;
@@ -19,8 +33,16 @@ type UserAccountUpdates = Partial<UserAccount & { id?: string }>;
 export function useUserAccount() {
   const { supabase, user, loading: authLoading } = useSupabase();
   const [accountData, setAccountData] = useState<UserAccount | null>(null);
+  const [schedulePrefs, setSchedulePrefs] = useState<SchedulePrefs | null>(null);
+  const [planners, setPlanners] = useState<string[] | null>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  function setData(data: any) {
+    setAccountData(data);
+    setSchedulePrefs(data.schedule_prefs);
+    setPlanners(data.planners);
+  }
 
   useEffect(() => {
     if (authLoading) return;
@@ -40,7 +62,7 @@ export function useUserAccount() {
           .single();
 
         if (error) throw error;
-        setAccountData(data);
+        setData(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch account');
       } finally {
@@ -66,7 +88,7 @@ export function useUserAccount() {
         .single();
 
       if (error) throw error;
-      setAccountData(data);
+      setData(data);
       return data;
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -90,8 +112,7 @@ export function useUserAccount() {
         .single();
 
       if (error) throw error;
-
-      setAccountData(data);
+      setData(data);
       return data;
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -115,8 +136,7 @@ export function useUserAccount() {
         .single();
 
       if (error) throw error;
-
-      setAccountData(data);
+      setData(data);
       return data;
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -153,8 +173,26 @@ export function useUserAccount() {
     accessLevel,
     hasProAccess: accessLevel === 'pro',
     calendarUsed,
+    schedulePrefs,
+    planners,
     refresh,
     updateAccount,
     upsertAccount,
   };
+}
+
+export async function updateUserTokens(userId: string, newTokenCount: number) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ tokens_left: newTokenCount })
+    .eq("id", userId)
+    .select("tokens_left")
+    .single();
+
+  if (error) {
+    console.error("Failed to update user tokens:", error);
+    throw error;
+  }
+
+  return data.tokens_left;
 }

@@ -5,11 +5,16 @@ import { useRouter } from "next/navigation";
 import { getUserGroups } from "@/lib/group";
 import Link from "next/link";
 import { useUserAccount } from "@/lib/hooks/useUserAccount";
+import { loadEvents } from "@/lib/groupEvents";
 
 import NotificationViewer from "@/components/NotificationViewer";
 import EventsCalendar from "@/components/EventsCalendar";
 import ProPill from "@/components/ProPill";
 import { supabase } from "@/lib/supabaseClient";
+import { Form, Row, Col, Button, Spinner } from "react-bootstrap";
+import { PreferencesPopup } from "@/components/PreferencesPopup";
+import CreateStudyPlan from "@/components/CreateStudyPlan";
+import PlannerViewer from "@/components/PlannerViewer";
 
 interface UserGroup {
   id: string;
@@ -20,8 +25,19 @@ interface UserGroup {
   user_count: number;
 }
 
+interface Preferences {
+  morning_person: boolean;
+  busyness: string;
+  least_busy_days: string[] | null;
+  school_work: { type: string; hours: string } | null;
+  earliest_awake: string | null;
+  latest_asleep: string | null;
+  other_info: string | null;
+}
+
 export default function Dashboard() {
-  const { 
+  const {
+    updateAccount,
     supabase,
     user, 
     accountData, 
@@ -29,13 +45,18 @@ export default function Dashboard() {
     accessLevel, 
     hasActiveTrial,
     hasProAccess,
-    calendarUsed
+    calendarUsed,
+    schedulePrefs,
+    planners,
+    refresh
   } = useUserAccount();
   const router = useRouter();
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [groupIds, setGroupIds] = useState<string[]>([]);
   const [fetching, setFetching] = useState(false);
   const [activeTab, setActiveTab] = useState<'alerts' | 'calendar' | 'chat' | 'groups'>('alerts');
+  const [events, setEvents] = useState<any[]>([]);
+  const [calendarKey, setCalendarKey] = useState(0); // Key to force remount calendar
 
   // Redirect if not logged in
   useEffect(() => {
@@ -74,12 +95,24 @@ export default function Dashboard() {
     }
   }, [groups]);
 
-  if (loading || fetching) return <h1>Loading...</h1>;
-  if (!user) return null;
+  const isLoading = loading || fetching;
+  
+  if (!loading && !user) return null;
+
+  const LoadingSpinner = ({ text }: { text: string }) => (
+    <div className="text-center py-5">
+      <Spinner animation="border" role="status" variant="primary" className="mb-3">
+        <span className="visually-hidden">Loading...</span>
+      </Spinner>
+      <p className="text-muted">{text}</p>
+    </div>
+  );
 
   const GroupsContent = () => (
     <div>
-      {groups.length === 0 ? (
+      {isLoading ? (
+        <LoadingSpinner text="Loading groups..." />
+      ) : groups.length === 0 ? (
         <p className="text-center text-muted">You are not in any groups.</p>
       ) : (
         <div className="list-group">
@@ -115,6 +148,21 @@ export default function Dashboard() {
       )}
     </div>
   );
+
+  async function handleUpdateUserPreferences() {
+    try {
+      await updateAccount({ schedule_prefs: null });
+      await refresh();
+    } catch (error) {
+      console.error("Failed to reset preferences:", error);
+      alert("An error occurred while resetting your preferences.");
+    }
+  }
+
+  // Callback to refresh calendar when events are added
+  const handleCalendarRefresh = () => {
+    setCalendarKey(prev => prev + 1);
+  };
 
   return (
     <div className="container px-5 my-5">
@@ -157,9 +205,9 @@ export default function Dashboard() {
                     onClick={() => setActiveTab('chat')}
                     type="button"
                     role="tab"
-                    disabled={!hasProAccess}
+                    disabled={!hasProAccess && !isLoading}
                   >
-                    AI Planner{ !hasProAccess && (
+                    AI Planner{ !hasProAccess && !isLoading && (
                       <a href="/pricing"><div className="m-1 my-0"><ProPill accessLevel="pro" hasActiveTrial={false} /></div></a>
                       
                     )}
@@ -184,7 +232,11 @@ export default function Dashboard() {
                 {activeTab === 'alerts' && (
                   <section className="tab-pane fade show active">
                     <h4>Notifications</h4>
-                    <NotificationViewer groupIds={groupIds}/>
+                    {isLoading ? (
+                      <LoadingSpinner text="Loading notifications..." />
+                    ) : (
+                      <NotificationViewer groupIds={groupIds}/>
+                    )}
                   </section>
                 )}
 
@@ -192,15 +244,82 @@ export default function Dashboard() {
                 {activeTab === 'calendar' && (
                   <section className="tab-pane fade show active">
                     <h4>Personal Calendar</h4>
-                    <EventsCalendar groupIds={groupIds} isCreator={false} isPersonal={true} />
+                    {isLoading ? (
+                      <LoadingSpinner text="Loading calendar..." />
+                    ) : (
+                      <EventsCalendar 
+                        key={calendarKey}
+                        groupIds={groupIds} 
+                        isCreator={false} 
+                        isPersonal={true}
+                        onEventAdded={handleCalendarRefresh}
+                      />
+                    )}
                   </section>
                 )}
 
                 {/* AI Chat Section */}
                 {activeTab === 'chat' && (
                   <section className="tab-pane fade show active">
-                    <h4>AI Planner - { calendarUsed.includes("google") ? (<span className="fw-light fs-5 text-secondary">Using Google Calendar</span>) : (<span className="fw-light fs-5 text-secondary">No Calendar Connected</span>)}</h4>
-                    { !calendarUsed.includes("google") && (<button className="btn btn-primary" onClick={connectGoogle}>Connect Google Calendar</button>)}
+                    <div className="" style={{minHeight: '50vh'}}>
+                      {isLoading ? (
+                        <LoadingSpinner text="Loading AI Planner..." />
+                      ) : (
+                        <>
+                          <span className="d-flex">
+                            { calendarUsed.includes("google") ? (
+                              <span className="fw-light fs-5 text-secondary">(Using Google Calendar)</span>
+                            ) : (
+                              <span className="fw-light fs-5 text-secondary">No Calendar Connected</span>
+                            )}
+                            { schedulePrefs && (<PreferencesPopup onEdit={handleUpdateUserPreferences}/>) }
+                          </span>
+                          { !calendarUsed.includes("google") ? (
+                            <button className="btn btn-primary" onClick={connectGoogle}>Connect Google Calendar</button>
+                          ) : (
+                            <>
+                              {(accountData.tokens_left >= 2000) ? (<span>You can make about {Math.ceil(accountData.tokens_left / 5000)} new planners this month</span>):
+                              (
+                                <span>You can't make any new planners this month</span>
+                              )}
+                              { (schedulePrefs === null) ? (
+                                <PreferencesInput onSubmit={async (prefs) => {
+                                  try {
+                                    await updateAccount({ schedule_prefs: prefs });
+                                    console.log("Preferences saved to Supabase:", prefs);
+                                  } catch (err) {
+                                    console.error("Failed to update preferences:", err);
+                                  }
+                                }} />
+                              ) : (
+                                <div className="m-2 p-1">
+                                  {(planners.length === 0) ? (
+                                    <CreateStudyPlan
+                                      user={user}
+                                      schedulePrefs={schedulePrefs}
+                                      userEvents={events}
+                                      onSubmit={async () => {
+                                        const oneMonthFromNow = new Date();
+                                        oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+                                        await loadEvents(supabase, true, user, groupIds, accountData, null, setEvents, oneMonthFromNow);
+                                        console.log("Returning: ", events);
+                                        return events;
+                                      }}
+                                      refresh={refresh}
+                                      tokensLeft={accountData.tokens_left}
+                                    />
+                                  ) : (
+                                    <PlannerViewer
+                                      userId={user.id}
+                                    />
+                                  )}
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </section>
                 )}
 
@@ -232,6 +351,182 @@ export default function Dashboard() {
   );
 }
 
+function PreferencesInput({
+  onSubmit,
+}: {
+  onSubmit: (prefs: Preferences) => void;
+}) {
+  const [prefs, setPrefs] = useState<Preferences>({
+    morning_person: false,
+    busyness: "",
+    least_busy_days: [], 
+    school_work: { type: "", hours: "" },
+    earliest_awake: null,
+    latest_asleep: null,
+    other_info: null,
+  });
+
+  const handleChange = (field: keyof Preferences, value: any) => {
+    const updated = { ...prefs, [field]: value };
+    setPrefs(updated);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(prefs);
+  };
+
+  return (
+    <Form className="p-3 border rounded bg-light shadow-sm" onSubmit={handleSubmit}>
+      <h4 className="mb-4 text-center">Enter Your Preferences</h4>
+      {/* Morning Person Toggle */}
+      <Form.Group className="mb-3">
+        <Form.Check
+          type="switch"
+          id="morning-person"
+          label="I'm a morning person"
+          checked={prefs.morning_person}
+          onChange={(e) => handleChange("morning_person", e.target.checked)}
+        />
+      </Form.Group>
+
+      {/* Busyness Dropdown */}
+      <Form.Group className="mb-3">
+        <Form.Label>How busy are you? <span className="text-danger">*</span></Form.Label>
+        <Form.Select
+          value={prefs.busyness}
+          onChange={(e) => handleChange("busyness", e.target.value)}
+          required
+        >
+          <option value="">Select option</option>
+          <option value="very busy">Very busy</option>
+          <option value="somewhat busy">Somewhat busy</option>
+          <option value="not busy">Not busy</option>
+          <option value="open schedule">Open schedule</option>
+        </Form.Select>
+      </Form.Group>
+
+      {/* Least Busy Days (Checkboxes) */}
+      <Form.Group className="mb-3">
+        <Form.Label>Least busy days</Form.Label>
+        <div>
+          {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day) => (
+            <Form.Check
+              key={day}
+              type="checkbox"
+              id={`day-checkbox-${day}`}
+              label={day}
+              checked={prefs.least_busy_days?.includes(day) || false}
+              onChange={(e) => {
+                const isChecked = e.target.checked;
+                let updatedDays: string[] = Array.isArray(prefs.least_busy_days) 
+                  ? [...prefs.least_busy_days] 
+                  : [];
+
+                if (isChecked) {
+                  if (!updatedDays.includes(day)) {
+                    updatedDays.push(day);
+                  }
+                } else {
+                  updatedDays = updatedDays.filter((d) => d !== day);
+                }
+                
+                handleChange("least_busy_days", updatedDays.length > 0 ? updatedDays : null);
+              }}
+              inline
+            />
+          ))}
+        </div>
+      </Form.Group>
+
+      {/* School/Work Info */}
+      <Form.Group className="mb-3">
+        <Form.Label>School or Work</Form.Label>
+        <Row>
+          <Col>
+            <Form.Control
+              type="text"
+              placeholder="Type (e.g. School, Job)"
+              value={prefs.school_work?.type || ""}
+              onChange={(e) =>
+                handleChange("school_work", {
+                  ...prefs.school_work,
+                  type: e.target.value,
+                })
+              }
+            />
+          </Col>
+          <Col>
+            <Form.Control
+              type="number"
+              placeholder="Hours per day"
+              value={prefs.school_work?.hours || ""}
+              onChange={(e) =>
+                handleChange("school_work", {
+                  ...prefs.school_work,
+                  hours: e.target.value,
+                })
+              }
+            />
+          </Col>
+        </Row>
+      </Form.Group>
+
+      {/* Earliest Awake / Latest Asleep */}
+      <Row>
+        <Col>
+          <Form.Group className="mb-3">
+            <Form.Label>Earliest you wake up <span className="text-danger">*</span></Form.Label>
+            <Form.Control
+              type="time"
+              value={prefs.earliest_awake || ""}
+              onChange={(e) =>
+                handleChange("earliest_awake", e.target.value || null)
+              }
+              required
+            />
+          </Form.Group>
+        </Col>
+
+        <Col>
+          <Form.Group className="mb-3">
+            <Form.Label>Latest you go to sleep <span className="text-danger">*</span></Form.Label>
+            <Form.Control
+              type="time"
+              value={prefs.latest_asleep || ""}
+              onChange={(e) =>
+                handleChange("latest_asleep", e.target.value || null)
+              }
+              required
+            />
+          </Form.Group>
+        </Col>
+      </Row>
+
+      {/* Other Info */}
+      <Form.Group className="mb-3">
+        <Form.Label>Other Info</Form.Label>
+        <Form.Control
+          as="textarea"
+          rows={3}
+          placeholder="Anything else you'd like us to know?"
+          value={prefs.other_info || ""}
+          onChange={(e) => handleChange("other_info", e.target.value || null)}
+        />
+      </Form.Group>
+      
+      {/* Submit Button */}
+      <div className="d-flex justify-content-end">
+        <Button type="submit" variant="primary">
+          Save Preferences
+        </Button>
+      </div>
+
+    </Form>
+  );
+}
+
+
 async function connectGoogle() {
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -240,7 +535,7 @@ async function connectGoogle() {
     return;
   }
 
-  const redirectUri = `http://localhost:3000/api/google/callback`;
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
 
   const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   authUrl.searchParams.set("client_id", process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!);

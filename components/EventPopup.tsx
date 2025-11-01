@@ -2,14 +2,13 @@
 
 import { deleteEvent, getGroupFromEvent } from "@/lib/groupEvents";
 import { SupabaseClient } from "@supabase/supabase-js";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { createNotif } from "@/lib/notifications";
 import { Modal, Button, Form } from "react-bootstrap";
 
 interface EventPopupProps {
   show: boolean;
   onClose: () => void;
-  loadEvents: () => void;
   event: {
     id: string;
     title: string;
@@ -28,7 +27,6 @@ interface EventPopupProps {
 export default function EventPopup({
   show,
   onClose,
-  loadEvents,
   event,
   isCreator,
   supabase,
@@ -62,19 +60,21 @@ export default function EventPopup({
 
   async function handleDeleteEvent() {
     await deleteEvent(supabase, event.id);
-    loadEvents();
+    window.location.reload();
     onClose();
   }
 
   async function notifyAbsence() {
     const group = await getGroupFromEvent(supabase, event.id);
-    await createNotif(supabase, group.group, event, "absent");
+    console.log("Group", group);
+    await createNotif(supabase, group, event, "absent");
     onClose();
   }
 
   async function notifyGroup(details: string) {
     const group = await getGroupFromEvent(supabase, event.id);
-    await createNotif(supabase, group.group, event, "group_alert", details);
+    console.log("Group", group);
+    await createNotif(supabase, group, event, "group_alert", details);
   }
 
   function openNotifyEventPopup() {

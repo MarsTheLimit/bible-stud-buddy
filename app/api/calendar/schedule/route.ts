@@ -1,102 +1,149 @@
-import OpenAI from "openai";
-import { google } from "googleapis";
-import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from 'next/server';
+import { OpenAI } from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // server-only
-);
+// --- Interface Definitions ---
 
-export async function POST(req: Request) {
-  const { access_token, userId, groupIds } = await req.json();
+// Define the shape of the incoming user preferences
+type SchedulePrefs = {
+    morning_person: boolean;
+    busyness: string;
+    least_busy_days: string[] | null; // Assuming a list of strings (e.g., ["Saturday", "Sunday"])
+    school_work: { type: string, hours: string } | null;
+    earliest_awake: string | null;
+    latest_asleep: string | null;
+    other_info: string | null;
+};
 
-  // --- 1. Get Google Calendar events ---
-  const oauth2Client = new google.auth.OAuth2();
-  oauth2Client.setCredentials({ access_token });
+export type Event = {
+  title: string;
+  description: string;
+  start: string;
+  end: string;
+};
 
-  const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+// Define the shape of the incoming data
+interface StudyPlanData {
+    name: string;
+    userPrefs: SchedulePrefs;
+    dateEnds: string;
+    studyArea: string | null;
+    userEvents: Event[];
+}
 
-  const now = new Date();
-  const nextMonth = new Date(now);
-  nextMonth.setMonth(now.getMonth() + 1);
+// Next.js App Router POST handler
+export async function POST(request: Request) {
+    // Initialize OpenAI client
+    // const openai = new OpenAI({
+    //   apiKey: process.env.OPENAI_API_KEY,
+    // });
+    
+    try {
+        const { name, userPrefs, dateEnds, studyArea, userEvents } : StudyPlanData = await request.json();
 
-  const googleEventsResponse = await calendar.events.list({
-    calendarId: "primary",
-    timeMin: now.toISOString(),
-    timeMax: nextMonth.toISOString(),
-  });
+        // console.log(userEvents)
 
-  const googleEvents = (googleEventsResponse.data.items || []).map(e => ({
-    start: e.start?.dateTime || e.start?.date,
-    end: e.end?.dateTime || e.end?.date,
-    title: e.summary || "Google Event",
-    source: "google",
-  }));
+        const preferenceDetails = `
+            - **Personal Schedule:** The user is a ${userPrefs.morning_person ? '**MORNING PERSON** (Schedule things early)' : 'night owl (Schedule things later)'}.
+            - **Daily Availability:** The user describes their busyness level as **${userPrefs.busyness}**. The schedule should reflect this (e.g., longer sessions for "Light," shorter/fewer for "Very Busy").
+            - **Optimal Days:** The user's least busy days are: **${userPrefs.least_busy_days?.join(', ') || 'None provided'}**. Schedule longer/more challenging sessions on these days.
+            - **Daily Commitments:** The user has **${userPrefs.school_work?.type || 'No defined school/work'}** for **${userPrefs.school_work?.hours || '0'}** hours daily. Schedule study *around* this commitment.
+            - **Wake/Sleep Times:** Study sessions must be **NO EARLIER** than **${userPrefs.earliest_awake || '4:00 AM'}** and **NO LATER** than **${userPrefs.latest_asleep || '11:00 PM'}**.
+            - **Other Notes:** **${userPrefs.other_info || 'No additional information.'}**
+        `;
 
-  // --- 2. Get Supabase personal events ---
-  let personalEvents: any[] = [];
-  const personalData = await getGroupEvents(supabase, null); // personal = null
-  for (const e of personalData) {
-    personalEvents.push({
-      start: new Date(e.date).toISOString(),
-      end: new Date(e.end_date).toISOString(),
-      title: e.title,
-      source: "personal",
-      groupName: null,
-    });
-  }
+        // 2. Construct the main prompt
+        const prompt = `
+            You are an expert personal scheduling assistant. Your task is to generate a comprehensive Bible study plan based on the user's progress and detailed personal preferences.
+            
+            **Goal:** Create a study schedule to complete the remaining Bible content by the target end date.
+            
+            **Input Data:**
+            - **Study Name:** "${name}"
+            - **Target End Date:** ${dateEnds} (Do not schedule any event past this date/time).
+            - **Existing Events:**  
+              The user already has the following events scheduled. You **must NOT** create any new study events that overlap with or are too close to these.  
+              Each event includes a start (date) and end (end_date) time in ISO 8601 format.  
+              Ensure a **minimum 15-minute buffer** before and after any existing event to prevent scheduling conflicts.
 
-  // --- 3. Get Supabase group events ---
-  let groupEvents: any[] = [];
-  if (groupIds && groupIds.length > 0) {
-    for (const gid of groupIds) {
-      const groupData = await getGroupEvents(supabase, gid);
-      for (const e of groupData) {
-        const groupName = await getGroupFromEvent(supabase, e.id);
-        groupEvents.push({
-          start: new Date(e.date).toISOString(),
-          end: new Date(e.end_date).toISOString(),
-          title: groupName ? `${groupName} - ${e.title}` : e.title,
-          source: "group",
-          groupName,
+              Here are the user's current events in JSON:
+              ${JSON.stringify(
+                userEvents.map(({ title, start, end }) => ({
+                  title,
+                  start,
+                  end,
+                })),
+                null,
+                2
+              )}
+
+            **Scheduling Rules (APPLY THESE STRICTLY):**
+            ${preferenceDetails}
+            
+            **Output Format:**
+            Generate a JSON array of events. Each event must strictly adhere to the provided TypeScript interface/shape.
+            
+            - **title:** ${(studyArea !== null && studyArea !== '') ? (`Must be an appropriate name for the study time followed the user-provided study name ("[Book of the Bible] 8:1-17 - ${name}") that is based around the user's study area: ${studyArea}. If the study area does not apply to to the Bible, diregard this and leave the title blank.`) : 
+              (`Must be 'Bible Study' followed by the user-provided study name ('Bible Study - ${name}')`)}.
+            - **description:** ${(studyArea !== null && studyArea !== '') ? (`Must be a clear, actionable task (e.g., "Read [Book of the Bible] 8:1-17 and write three insights.") that is based around the user's study area: ${studyArea}. If the study area does not apply to to the Bible, diregard this and leave the description blank.`) : ('leave blank')}.
+            - **start/end:** Must be valid ISO 8601 timestamps, calculated using today's date and the scheduling rules. The duration of the event should be based on busyness and day.
+
+            **Generate ONLY the JSON array.**
+        `;
+
+        // console.log(prompt)
+
+        // // 3. Call OpenAI with JSON Mode
+        // const completion = await openai.chat.completions.create({
+        //     model: "gpt-4o-mini",
+        //     messages: [
+        //         {
+        //             role: "system",
+        //             content: "You are a professional scheduler that outputs ONLY a valid JSON array of structured events. Do not include any preceding or trailing text."
+        //         },
+        //         {
+        //             role: "user",
+        //             content: prompt
+        //         }
+        //     ],
+        //     response_format: { type: "json_object" }, // Crucial for reliable JSON output
+        //     temperature: 0.5,
+        // });
+
+        // // 4. Extract and Parse the JSON output
+        // const jsonString = completion.choices[0].message.content;
+        // if (!jsonString) {
+        //      return NextResponse.json({ error: 'OpenAI returned empty content.' }, { status: 500 });
+        // }
+        
+        // // The expected output is an object containing the array, so we must parse it carefully
+        // const responseData = JSON.parse(jsonString);
+        
+        // // Assuming the model returns the array directly or inside a property like { events: [] }
+        // // We'll try to handle the JSON gracefully:
+        // const scheduleArray: Event[] = Array.isArray(responseData) 
+        //     ? responseData 
+        //     : responseData.schedule || responseData.events || []; // Check common wrapping keys
+
+        // if (scheduleArray.length === 0) {
+        //      return NextResponse.json({ error: 'OpenAI returned a JSON object but no events were found.' }, { status: 500 });
+        // }
+
+        // if (!completion.usage) {
+        //   return NextResponse.json({ error: 'OpenAI returned a JSON object with events but no token amount.' }, { status: 500 });
+        // }
+
+        // 5. Success response
+        return NextResponse.json({ 
+            message: 'Schedule successfully generated and parsed.',
+            scheduleEvents: [], //scheduleArray, // Return the structured array
+            usage: 5000 //completion.usage.total_tokens
         });
-      }
+
+    } catch (error) {
+        console.error('API Error:', error);
+        return NextResponse.json(
+            { error: 'Internal Server Error while generating schedule.', details: (error as Error).message }, 
+            { status: 500 }
+        );
     }
-  }
-
-  // --- 4. Combine all events ---
-  const combinedEvents = [...googleEvents, ...personalEvents, ...groupEvents];
-
-  // --- 5. Build GPT prompt ---
-  const prompt = `
-You are scheduling Bible study sessions for a user. Consider their busy schedule:
-${JSON.stringify(combinedEvents, null, 2)}
-
-Schedule 8-12 Bible study sessions over the next month, each 30 minutes long.
-Ensure sessions do not conflict with any existing events.
-Return as JSON array with "dateTimeStart" and "dateTimeEnd".
-`;
-
-  // --- 6. Ask GPT-5 ---
-  const aiResponse = await openai.chat.completions.create({
-    model: "gpt-5",
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const schedule = JSON.parse(aiResponse.choices[0].message.content);
-
-  // --- 7. Insert Bible study sessions into Google Calendar ---
-  for (const study of schedule) {
-    await calendar.events.insert({
-      calendarId: "primary",
-      resource: {
-        summary: "Bible Study",
-        start: { dateTime: study.dateTimeStart },
-        end: { dateTime: study.dateTimeEnd },
-      },
-    });
-  }
-
-  return new Response(JSON.stringify({ success: true, scheduled: schedule }));
 }
