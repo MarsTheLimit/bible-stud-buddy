@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2023-10-16" });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2025-09-30.clover" });
 
 // Secure server-side Supabase client (requires SERVICE key)
 const supabaseAdmin = createClient(
@@ -60,7 +60,9 @@ export async function POST(req: Request) {
       }
 
       case 'invoice.payment_succeeded': {
-        const invoice = data as Stripe.Invoice;
+        const invoice = event.data.object as Stripe.Invoice & {
+          subscription?: string | Stripe.Subscription;
+        };
 
         // Safe type check for optional subscription field
         const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : null;
@@ -91,7 +93,9 @@ export async function POST(req: Request) {
       }
 
       case 'invoice.payment_failed': {
-        const invoice = data as Stripe.Invoice;
+        const invoice = event.data.object as Stripe.Invoice & {
+          subscription?: string | Stripe.Subscription;
+        };
 
         // Safe type check for optional subscription field
         const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : null;

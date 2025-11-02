@@ -276,7 +276,7 @@ export default function Dashboard() {
                             <button className="btn btn-primary" onClick={connectGoogle}>Connect Google Calendar</button>
                           ) : (
                             <>
-                              {(accountData?.tokens_left >= 2000) ? (<span>You can make about {Math.ceil(accountData.tokens_left / 5000)} new planners this month</span>):
+                              {((accountData?.tokens_left ?? 0) >= 2000) ? (<span>You can make about {Math.ceil((accountData?.tokens_left ?? 0) / 5000)} new planners this month</span>):
                               (
                                 <span>You can&apos;t make any new planners this month</span>
                               )}
@@ -291,7 +291,7 @@ export default function Dashboard() {
                                 }} />
                               ) : (
                                 <div className="m-2 p-1">
-                                  {(planners.length === 0) ? (
+                                  {((planners?.length ?? 0) === 0) ? (
                                     <CreateStudyPlan
                                       user={user}
                                       schedulePrefs={schedulePrefs}
@@ -299,16 +299,16 @@ export default function Dashboard() {
                                       onSubmit={async () => {
                                         const oneMonthFromNow = new Date();
                                         oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-                                        await loadEvents(supabase, true, user, groupIds, accountData, null, setEvents, oneMonthFromNow);
+                                        setEvents(await loadEvents(supabase, true, user, groupIds, accountData, null, oneMonthFromNow));
                                         console.log("Returning: ", events);
                                         return events;
                                       }}
                                       refresh={refresh}
-                                      tokensLeft={accountData.tokens_left}
+                                      tokensLeft={(accountData?.tokens_left ?? 0)}
                                     />
                                   ) : (
                                     <PlannerViewer
-                                      userId={user.id}
+                                      userId={user?.id}
                                     />
                                   )}
                                 </div>
@@ -533,7 +533,7 @@ async function connectGoogle() {
     return;
   }
 
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI!;
 
   const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   authUrl.searchParams.set("client_id", process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!);

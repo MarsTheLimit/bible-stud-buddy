@@ -7,7 +7,7 @@ type Planner = {
   name: string;
 };
 
-export default function PlannerViewer({ userId }: { userId: string }) {
+export default function PlannerViewer({ userId }: { userId: string | undefined }) {
   const [planners, setPlanners] = useState<Planner[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,6 +15,7 @@ export default function PlannerViewer({ userId }: { userId: string }) {
 
   async function handleDeletePlanner(plannerId: string) {
     try {
+      if (userId === undefined) return
       // Await the delete
       await deletePlanner(userId, plannerId);
 
