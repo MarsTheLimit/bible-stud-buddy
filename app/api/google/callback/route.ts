@@ -4,13 +4,13 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY! // <── Service role key, server only!
+  process.env.SUPABASE_SERVICE_KEY!
 );
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
-  const userId = url.searchParams.get("state"); // <── retrieve it here!
+  const userId = url.searchParams.get("state");
 
   if (!userId) {
     return NextResponse.json({ error: "Missing user_id (state)" }, { status: 400 });

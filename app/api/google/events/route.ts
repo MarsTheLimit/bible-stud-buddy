@@ -29,10 +29,18 @@ export async function POST(req: NextRequest) {
     const events = await fetchAllGoogleEvents(supabase, user.id);
     return NextResponse.json({ events });
   } catch (error: unknown) {
-    console.error("Error fetching Google events:", error);
-    return NextResponse.json(
-      { error: error.message || "Unknown error" },
-      { status: 500 }
-    );
+    if (error instanceof Error) {
+      console.error("Error fetching Google events:", error);
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    } else {
+      console.error("Error fetching Google events:", error);
+      return NextResponse.json(
+        { error: "Unkown Error" },
+        { status: 500 }
+      );
+    }
   }
 }

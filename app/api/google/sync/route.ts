@@ -30,7 +30,18 @@ export async function POST(req: NextRequest) {
     await syncEventsToGoogleCalendar(supabase, user.id, events, calendarName);
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
-    console.error("Google sync error:", error);
-    return NextResponse.json({ error: error.message || "Sync failed" }, { status: 500 });
+    if (error instanceof Error) {
+      console.error("Error fetching Google events:", error);
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    } else {
+      console.error("Error fetching Google events:", error);
+      return NextResponse.json(
+        { error: "Unkown Error" },
+        { status: 500 }
+      );
+    }
   }
 }

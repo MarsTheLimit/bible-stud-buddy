@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   const body = await req.text();
   const signature = req.headers.get('stripe-signature');
 
-  console.log("✅ Webhook received");
+  console.log("Webhook received");
 
   let event: Stripe.Event;
 
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     event = stripe.webhooks.constructEvent(body, signature!, webhookSecret);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-    console.error(`❌ Webhook signature verification failed:`, errorMessage);
+    console.error(`Webhook signature verification failed:`, errorMessage);
     return new NextResponse(`Webhook Error: ${errorMessage}`, { status: 400 });
   }
 
@@ -55,14 +55,19 @@ export async function POST(req: Request) {
           .eq('id', userId);
 
         if (updateError) throw updateError;
-        console.log(`🎉 User ${userId} upgraded to Pro!`);
+        console.log(`User ${userId} upgraded to Pro!`);
         break;
       }
 
-      // 🔹 Subscription successfully renewed or repaid
       case 'invoice.payment_succeeded': {
         const invoice = data as Stripe.Invoice;
-        const subscriptionId = invoice.subscription as string;
+
+        // Safe type check for optional subscription field
+        const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : null;
+        if (!subscriptionId) {
+          console.warn("Invoice does not have a subscription ID:", invoice.id);
+          break;
+        }
 
         const { data: profile, error: fetchError } = await supabaseAdmin
           .from('profiles')
@@ -87,7 +92,13 @@ export async function POST(req: Request) {
 
       case 'invoice.payment_failed': {
         const invoice = data as Stripe.Invoice;
-        const subscriptionId = invoice.subscription as string;
+
+        // Safe type check for optional subscription field
+        const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : null;
+        if (!subscriptionId) {
+          console.warn("Invoice does not have a subscription ID:", invoice.id);
+          break;
+        }
 
         const { data: profile, error: fetchError } = await supabaseAdmin
           .from('profiles')
@@ -100,16 +111,16 @@ export async function POST(req: Request) {
           break;
         }
 
-        // Optional: warn user, limit access, or flag account
         const { error: warnError } = await supabaseAdmin
           .from('profiles')
-          .update({ account_type: 'pro_limited' }) // temporary status
+          .update({ account_type: 'pro_limited' })
           .eq('id', profile.id);
 
         if (warnError) throw warnError;
         console.log(`Payment failed — user ${profile.id} access temporarily limited.`);
         break;
       }
+
       case 'customer.subscription.deleted': {
         const subscription = data as Stripe.Subscription;
         const { data: profile, error: fetchError } = await supabaseAdmin
@@ -129,7 +140,7 @@ export async function POST(req: Request) {
             account_type: 'free',
             stripe_subscription_id: null,
             stripe_customer_id: null,
-            tokens_left: 0, // remove remaining paid tokens
+            tokens_left: 0,
           })
           .eq('id', profile.id);
 
@@ -143,8 +154,9 @@ export async function POST(req: Request) {
     }
 
     return new NextResponse(JSON.stringify({ received: true }), { status: 200 });
-  } catch (err: unknown) {
-    console.error('Error handling webhook event:', err);
-    return new NextResponse(`Webhook handler failed: ${err.message}`, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

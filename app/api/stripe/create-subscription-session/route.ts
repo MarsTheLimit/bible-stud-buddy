@@ -22,7 +22,18 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ sessionUrl: session.url });
   } catch (error: unknown) {
-    console.error("Stripe session creation failed:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error instanceof Error) {
+      console.error("Error fetching Google events:", error);
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    } else {
+      console.error("Error fetching Google events:", error);
+      return NextResponse.json(
+        { error: "Unkown Error" },
+        { status: 500 }
+      );
+    }
   }
 }

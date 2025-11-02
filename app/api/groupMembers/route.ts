@@ -6,6 +6,16 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 );
 
+type UserProfile = {
+  id: string;
+  email: string;
+  created_at: string;
+};
+
+type Member = {
+  user: UserProfile;
+};
+
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
@@ -24,10 +34,24 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const users = members?.map((m: unknown) => m.user) ?? [];
+    console.log("MEMBERS ", members);
+
+    const users = (members as unknown as Member[])?.map((m) => m.user) ?? [];
 
     return NextResponse.json({ users });
-  } catch (err: unknown) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Error fetching Google events:", error);
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    } else {
+      console.error("Error fetching Google events:", error);
+      return NextResponse.json(
+        { error: "Unknown Error" },
+        { status: 500 }
+      );
+    }
   }
 }
