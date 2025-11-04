@@ -34,5 +34,5 @@ export async function GET(req: Request) {
     })
     .eq("id", userId);
 
-  return NextResponse.redirect("http://localhost:3000/dashboard");
+  return NextResponse.redirect(`${process.env.PROJECT_URL!}dashboard`);
 }
