@@ -299,7 +299,7 @@ export default function Dashboard() {
                                       onSubmit={async () => {
                                         const oneMonthFromNow = new Date();
                                         oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-                                        setEvents(await loadEvents(supabase, true, user, groupIds, accountData, null, oneMonthFromNow));
+                                        setEvents(await loadEvents(supabase, true, user, groupIds, oneMonthFromNow));
                                         console.log("Returning: ", events);
                                         return events;
                                       }}

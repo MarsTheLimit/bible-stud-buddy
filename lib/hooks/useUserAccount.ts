@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSupabase } from '@/components/SupabaseProvider';
 import { supabase } from "@/lib/supabaseClient";
 
-type UserAccount = {
+export type UserAccount = {
   account_type: 'free' | 'pro';
   trial_ends_at: string | null;
   trial_used: boolean;
@@ -32,7 +32,7 @@ type UserAccountUpdates = Partial<UserAccount & { id?: string }>;
 
 export function useUserAccount() {
   const { supabase, user, loading: authLoading } = useSupabase();
-  const [accountData, setAccountData] = useState<UserAccount | null>(null);
+  const [accountData, setAccountData] = useState<UserAccount | undefined>();
   const [schedulePrefs, setSchedulePrefs] = useState<SchedulePrefs | null>(null);
   const [planners, setPlanners] = useState<string[] | null>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +48,7 @@ export function useUserAccount() {
     if (authLoading) return;
 
     if (!user) {
-      setAccountData(null);
+      setAccountData(undefined);
       setLoading(false);
       return;
     }
@@ -78,7 +78,7 @@ export function useUserAccount() {
     setError(null);
     try {
       if (!user) {
-        setAccountData(null);
+        setAccountData(undefined);
         return null;
       }
       const { data, error } = await supabase

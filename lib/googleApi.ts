@@ -63,11 +63,9 @@ export async function fetchAllGoogleEvents(
     if (fetchError || !userData)
         throw new Error("User or token data not found in Supabase.");
 
-    const {
-        google_access_token: currentAccessToken,
-        google_refresh_token: refreshToken,
-        google_token_expires_at: tokenExpiryDateStr,
-    } = userData as UserTokens;
+    let { google_access_token: currentAccessToken } = userData as UserTokens;
+    const { google_refresh_token: refreshToken, google_token_expires_at: tokenExpiryDateStr } = userData as UserTokens;
+
 
     const tokenExpiryDate = new Date(tokenExpiryDateStr);
     const now = new Date();

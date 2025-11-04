@@ -1,18 +1,30 @@
-import { SupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient, User } from "@supabase/supabase-js";
+import { UserAccount } from "./hooks/useUserAccount";
 
-type Event = {
-  id: string,
-  title: string,
-  description: string,
-  date: Date,
-  end_date: Date,
-  schedule_id: string,
-  start: Date,
-  end: Date,
-  calendarId: string
+export type Event = {
+  id: string;
+  title: string;
+  description: string;
+  date: Date;
+  end_date: Date;
+  schedule_id: string;
+  start: Date;
+  end: Date;
+  calendarId: string;
+  isPersonal: boolean;
+  isCreator: boolean;
+  backgroundColor: string;
+  groupName: string | null;
+  group: undefined;
+  isGoogleEvent: boolean;
+  idx: number;
 }
 
-export async function getGroupEvents(supabase: SupabaseClient, groupId: string | null) {
+export type EventGroupData = {
+  groups: {name: string}
+}
+
+export async function getGroupEvents(supabase: SupabaseClient, groupId: string | null | undefined) {
   let query = supabase.from("events").select("*").order("date", { ascending: true });
 
   if (groupId) {
@@ -51,13 +63,13 @@ export async function getGroupFromEvent(supabase: SupabaseClient, eventId: strin
     .from("events")
     .select("group_id, groups(name)")
     .eq("id", eventId)
-    .single();
+    .single<EventGroupData>();
 
   if (error) {
     console.error("Error fetching group from event:", error);
     return null;
   }
-  if (justName) return data.groups.name;
+  if (justName) return data?.groups?.name || null;
   else return data || null;
 }
 
@@ -80,22 +92,80 @@ export async function deleteEvent(supabase : SupabaseClient, eventId: string) {
   if (error) throw error;
 }
 
+export async function loadGoogleEvents(
+  accountData: UserAccount | undefined,
+  month: boolean
+): Promise<Event[]> {
+  try {
+    const filterByDateRange = (events: Event[]) => {
+      if (!month) return events;
+
+      const now = new Date();
+      const oneMonthFromNow = new Date();
+      oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+
+      return events.filter((event) => {
+        const eventStart = new Date(event?.start);
+        return eventStart >= now && eventStart <= oneMonthFromNow;
+      });
+    };
+
+    if (accountData?.google_access_token) {
+      try {
+        const res = await fetch("/api/google/events", {
+          method: "POST",
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            access_token: accountData.google_access_token,
+            refresh_token: accountData.google_refresh_token,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const googleMapped = data.events.map((e: Event, idx: number) => ({
+            id: e.id,
+            title: `${e.title} (Google Calendar)`,
+            start: new Date(e.start),
+            end: new Date(e.end),
+            isPersonal: false,
+            isCreator: false,
+            backgroundColor: "#f4b400ff", // keep Google events yellow
+            groupName: e.calendarId !== "primary" ? e.calendarId : null,
+            isGoogleEvent: true,
+            idx,
+          }));
+
+          return filterByDateRange(googleMapped);
+        } else {
+          console.error("Google events fetch error");
+          return []; // Add return statement
+        }
+      } catch (error) {
+        console.error("Error fetching Google events:", error);
+        return []; // Add return statement
+      }
+    }
+
+    return []; // Add return statement for when no Google token exists
+  } catch (error) {
+    console.error("Error fetching Google events:", error);
+    return []; // Add return statement for outer catch
+  }
+}
 
 export async function loadEvents(
   supabase: SupabaseClient, 
   isPersonal: boolean, 
-  user: unknown, 
-  groupIds: string[], 
-  accountData: unknown, 
-  setGoogleEvents: ((events: unknown) => void) | null, 
-  // setEvents: (events: unknown) => void | null,
+  user: User, 
+  groupIds: string[],
   maxDate: Date | null = null,
-  proAccess: boolean | null = true
-) {
+) : Promise<Event[]> {
   try {
-    let combinedEvents: unknown[] = [];
+    let combinedEvents: Event[] = [];
 
-    const filterByDateRange = (events: unknown[]) => {
+    const filterByDateRange = (events: Event[]) => {
       if (!maxDate) return events;
 
       const now = new Date();
@@ -123,6 +193,15 @@ export async function loadEvents(
           backgroundColor: e.schedule_id ? "#ff0000" : "#0cd64fff",
           groupName: null,
           idx,
+
+          // TODO: REMOVE THESE LATER
+          description: e.description, // Re-add if separate from 'details'
+          date: new Date(e.date), // Required by Event type
+          end_date: new Date(e.end_date), // Required by Event type
+          schedule_id: e.schedule_id, // Required by Event type
+          calendarId: "", // Provide a default or derived value
+          group: undefined, // Required by Event type
+          isGoogleEvent: false, // Provide a default value
         }))
       );
       combinedEvents = [...combinedEvents, ...filterByDateRange(personalMapped)];
@@ -137,7 +216,7 @@ export async function loadEvents(
               return {
                 id: e.id,
                 title: groupName ? `${groupName} - ${e.title}` : e.title,
-                details: e.description,
+                description: e.description,
                 start: new Date(e.date),
                 end: new Date(e.end_date),
                 isPersonal: false,
@@ -152,43 +231,43 @@ export async function loadEvents(
         }
 
         // --- Google Calendar events ---
-        if (accountData?.google_access_token && proAccess) {
-          try {
-            const res = await fetch("/api/google/events", {
-              method: "POST",
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                access_token: accountData.google_access_token,
-                refresh_token: accountData.google_refresh_token,
-              }),
-            });
+        // if (accountData?.google_access_token && proAccess) {
+        //   try {
+        //     const res = await fetch("/api/google/events", {
+        //       method: "POST",
+        //       credentials: 'include',
+        //       headers: { 'Content-Type': 'application/json' },
+        //       body: JSON.stringify({
+        //         access_token: accountData.google_access_token,
+        //         refresh_token: accountData.google_refresh_token,
+        //       }),
+        //     });
 
-            if (res.ok) {
-              const data = await res.json();
-              const googleMapped = data.events.map((e: Event, idx: number) => ({
-                id: e.id,
-                title: `${e.title} (Google Calendar)`,
-                start: new Date(e.start),
-                end: new Date(e.end),
-                isPersonal: false,
-                isCreator: false,
-                backgroundColor: "#f4b400ff", // keep Google events yellow
-                groupName: e.calendarId !== "primary" ? e.calendarId : null,
-                isGoogleEvent: true,
-                idx,
-              }));
+        //     if (res.ok) {
+        //       const data = await res.json();
+        //       const googleMapped = data.events.map((e: Event, idx: number) => ({
+        //         id: e.id,
+        //         title: `${e.title} (Google Calendar)`,
+        //         start: new Date(e.start),
+        //         end: new Date(e.end),
+        //         isPersonal: false,
+        //         isCreator: false,
+        //         backgroundColor: "#f4b400ff", // keep Google events yellow
+        //         groupName: e.calendarId !== "primary" ? e.calendarId : null,
+        //         isGoogleEvent: true,
+        //         idx,
+        //       }));
 
-              const filteredGoogleEvents = filterByDateRange(googleMapped);
-              if (setGoogleEvents) setGoogleEvents(filteredGoogleEvents);
-              else combinedEvents = [...combinedEvents, ...filteredGoogleEvents];
-            } else {
-              console.error("Google events fetch error");
-            }
-          } catch (error) {
-            console.error("Error fetching Google events:", error);
-          }
-        }
+        //       const filteredGoogleEvents = filterByDateRange(googleMapped);
+        //       if (setGoogleEvents) setGoogleEvents(filteredGoogleEvents);
+        //       else combinedEvents = [...combinedEvents, ...filteredGoogleEvents];
+        //     } else {
+        //       console.error("Google events fetch error");
+        //     }
+        //   } catch (error) {
+        //     console.error("Error fetching Google events:", error);
+        //   }
+        // }
       }
     } else {
       // --- Group calendar: only first group ---

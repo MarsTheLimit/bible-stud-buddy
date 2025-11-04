@@ -34,8 +34,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    console.log("MEMBERS ", members);
-
     const users = (members as unknown as Member[])?.map((m) => m.user) ?? [];
 
     return NextResponse.json({ users });

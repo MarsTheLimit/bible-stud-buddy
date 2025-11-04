@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteEvent, getGroupFromEvent } from "@/lib/groupEvents";
+import { deleteEvent, Event, getGroupFromEvent } from "@/lib/groupEvents";
 import { SupabaseClient } from "@supabase/supabase-js";
 import React, { useState } from "react";
 import { createNotif } from "@/lib/notifications";
@@ -9,27 +9,28 @@ import { Modal, Button, Form } from "react-bootstrap";
 interface EventPopupProps {
   show: boolean;
   onClose: () => void;
-  event: {
-    id: string;
-    title: string;
-    details?: string;
-    start: string;
-    end: string;
-    group?: string | null;
-    isPersonal?: boolean;
-    groupName?: string | null;
-  };
+  event: Event | undefined; // {
+  //   id: string;
+  //   title: string;
+  //   details?: string;
+  //   start: string;
+  //   end: string;
+  //   group?: string | null;
+  //   isPersonal?: boolean;
+  //   groupName?: string | null;
+  // };
   isCreator: boolean;
   supabase: SupabaseClient;
   isPersonal: boolean;
+  isGoogle: boolean;
 }
 
-export default function EventPopup({ show, onClose, event, isCreator, supabase, isPersonal = false, }: EventPopupProps) {
+export default function EventPopup({ show, onClose, event, isCreator, supabase, isPersonal = false, isGoogle = false}: EventPopupProps) {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [showNotifyPopup, setShowNotifyPopup] = useState(false);
   const [notificationDetails, setNotificationDetails] = useState("");
 
-  if (!event) return null;
+  if (!event || event === undefined) return null;
 
   // Format dates/times
   const date = new Date(event.start);
@@ -52,12 +53,14 @@ export default function EventPopup({ show, onClose, event, isCreator, supabase, 
   const endTimeString = endDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 
   async function handleDeleteEvent() {
+    if (!event) return;
     await deleteEvent(supabase, event.id);
     window.location.reload();
     onClose();
   }
 
   async function notifyAbsence() {
+    if (!event) return;
     const group = await getGroupFromEvent(supabase, event.id);
     console.log("Group", group);
     await createNotif(supabase, group, event, "absent");
@@ -65,6 +68,7 @@ export default function EventPopup({ show, onClose, event, isCreator, supabase, 
   }
 
   async function notifyGroup(details: string) {
+    if (!event) return;
     const group = await getGroupFromEvent(supabase, event.id);
     console.log("Group", group);
     await createNotif(supabase, group, event, "group_alert", details);
@@ -112,9 +116,11 @@ export default function EventPopup({ show, onClose, event, isCreator, supabase, 
                   Alert Group
                 </Button>
               )}
-              <Button variant="outline-warning" onClick={notifyAbsence}>
-                Notify Absence
-              </Button>
+              {!isGoogle && (
+                <Button variant="outline-warning" onClick={notifyAbsence}>
+                  Notify Absence
+                </Button>
+              )}
             </>
           )}
 

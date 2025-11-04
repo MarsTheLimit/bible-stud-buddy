@@ -3,16 +3,17 @@ import { useState, useEffect } from "react";
 import { Button, Form, Modal, Spinner } from "react-bootstrap";
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
+import { enUS } from "date-fns/locale/en-US";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 
-import { createEvent, loadEvents } from "@/lib/groupEvents";
+import { createEvent, Event, loadEvents, loadGoogleEvents } from "@/lib/groupEvents";
 import EventInput from "./EventInput";
 import EventPopup from "./EventPopup";
 import { useUserAccount } from "@/lib/hooks/useUserAccount";
 
 const locales: Record<string, unknown> = {
-  "en-US": (await import("date-fns/locale/en-US")).default,
+  "en-US": enUS,
 };
 
 const LoadingSpinner = () => (
@@ -52,8 +53,8 @@ export default function EventsCalendar({
     } = useUserAccount();
     const [view, setView] = useState<View>("month");
     const [date, setDate] = useState(new Date());
-    const [events, setEvents] = useState<unknown[]>([]);
-    const [googleEvents, setGoogleEvents] = useState<unknown[]>([]);
+    const [events, setEvents] = useState<Event[]>([]);
+    const [googleEvents, setGoogleEvents] = useState<Event[]>([]);
     const [showGoogleEvents, setShowGoogleEvents] = useState(true);
     const [newEvent, setNewEvent] = useState({
         title: "",
@@ -62,9 +63,11 @@ export default function EventsCalendar({
         endDate: "",
         multiDay: false,
     });
-    const [selectedEvent, setSelectedEvent] = useState<unknown>(null);
+    const [selectedEvent, setSelectedEvent] = useState<Event>();
     const [showPopup, setShowPopup] = useState(false);
     const [showEventPopup, setEventShowPopup] = useState(false);
+
+    const [syncMsg, setSyncMsg] = useState("Sync Now")
 
     const [loadingEvents, setLoadingEvents] = useState(false)
 
@@ -84,7 +87,8 @@ export default function EventsCalendar({
 
     setNewEvent({ title: "", details: "", date: "", endDate: "", multiDay: false });
     setEventShowPopup(false);
-    await loadEvents(supabase, isPersonal, user, groupIds, accountData, setGoogleEvents, setEvents);
+    setEvents(await loadEvents(supabase, isPersonal, user, groupIds));
+    if (isPersonal) setGoogleEvents(await loadGoogleEvents(accountData, false));
     
     // Call the callback if provided
     if (onEventAdded) {
@@ -100,7 +104,8 @@ export default function EventsCalendar({
   useEffect(() => {
   const fetchEvents = async () => {
     setLoadingEvents(true);
-    await loadEvents(supabase, isPersonal, user, groupIds, accountData, setGoogleEvents, setEvents, null, hasProAccess);
+    setEvents(await loadEvents(supabase, isPersonal, user, groupIds));
+    if (isPersonal) setGoogleEvents(await loadGoogleEvents(accountData, false));
     setLoadingEvents(false);
   };
 
@@ -180,7 +185,7 @@ export default function EventsCalendar({
                     setSelectedEvent(event);
                     setShowPopup(true);
                 }}
-                eventPropGetter={(event) => {
+                eventPropGetter={(event : Event) => {
                     const backgroundColor = event.backgroundColor;
                     return { style: { backgroundColor, color: "black" } };
                 }}
@@ -195,7 +200,7 @@ export default function EventsCalendar({
               <Button
                 type="button"
                 id="sync-personal"
-                onClick={async (e) => {
+                onClick={async () => {
                     const res = await fetch("/api/google/sync", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
@@ -206,10 +211,10 @@ export default function EventsCalendar({
                     });
 
                     const data = await res.json();
-                    // if (data.success) alert("Events synced!");
-                    // else alert("Failed to sync personal events");
+                    if (data.success) setSyncMsg("Events synced!");
+                    else setSyncMsg("Syncing Error");
                 }}
-              >Sync now</Button>
+              >{syncMsg}</Button>
             </Form>
           </div>)}
         </div>
@@ -249,6 +254,7 @@ export default function EventsCalendar({
           isCreator={selectedEvent ? selectedEvent.isCreator : false}
           supabase={supabase}
           isPersonal={selectedEvent ? selectedEvent.isPersonal : false}
+          isGoogle={selectedEvent ? selectedEvent.isGoogleEvent : false}
         />
       </div>
     </div>

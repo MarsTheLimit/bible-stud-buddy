@@ -1,5 +1,5 @@
 import ContactForm from "@/components/ContactForm";
-import Image from 'next/image';
+import Image from 'react-bootstrap/Image';
 
 export default function Home() {
   return (
@@ -41,7 +41,7 @@ export default function Home() {
                 <Image
                   src="/profile.png"
                   alt="App preview"
-                  fill
+                  fluid
                   style={{ objectFit: 'cover' }}
                 />
               </div>
@@ -64,9 +64,8 @@ export default function Home() {
               <Image
                 src="/dashboard-preview.png"
                 alt="Dashboard preview"
-                width={800} // adjust width as needed
-                height={600} // adjust height as needed
-                className="rounded shadow"
+                fluid
+                rounded
               />
             </div>
           </div>
