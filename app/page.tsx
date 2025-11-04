@@ -10,6 +10,7 @@ export default function Home() {
           <div className="row gx-5 align-items-center">
             <div className="col-xxl-5">
               <div className="text-center text-xxl-start mb-4">
+                <span className="bg-gradient-primary-to-secondary p-1 px-2 rounded-pill text-white">PRE-RELEASE</span>
                 <h1 className="display-4 fw-bolder mb-3">
                   <span className="text-gradient d-inline">Bible Study Buddy</span>
                 </h1>
