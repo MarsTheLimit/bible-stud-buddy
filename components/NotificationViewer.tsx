@@ -5,6 +5,7 @@ import { getGroupNotifications, isUserGroupOwner } from "@/lib/notifications";
 import { useEffect, useState } from "react";
 import { Spinner } from "react-bootstrap";
 import { supabase } from "@/lib/supabaseClient";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 // --- Helper to delete notification ---
 async function deleteNotification(id: number) {
@@ -98,7 +99,7 @@ function NotificationCardWrapper({
 }: {
   notif: Notification;
   userId?: string;
-  supabase: unknown;
+  supabase: SupabaseClient;
   onDelete: (id: number) => void;
   deleting: boolean;
 }) {

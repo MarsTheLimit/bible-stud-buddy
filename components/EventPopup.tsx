@@ -9,16 +9,7 @@ import { Modal, Button, Form } from "react-bootstrap";
 interface EventPopupProps {
   show: boolean;
   onClose: () => void;
-  event: Event | undefined; // {
-  //   id: string;
-  //   title: string;
-  //   details?: string;
-  //   start: string;
-  //   end: string;
-  //   group?: string | null;
-  //   isPersonal?: boolean;
-  //   groupName?: string | null;
-  // };
+  event: Event | undefined;
   isCreator: boolean;
   supabase: SupabaseClient;
   isPersonal: boolean;

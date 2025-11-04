@@ -87,9 +87,10 @@ export default function GroupPage({ params }: { params: Promise<{ groupId: strin
   async function handlePrayerSubmit() {
     try {
         const groupInfo = {
-        group_id: groupId,
-        name: group?.name || "Unnamed Group",
-        creator_id: group?.created_by,
+          group_id: groupId,
+          groups: undefined,
+          name: group?.name || "Unnamed Group",
+          creator_id: group?.created_by,
         };
 
         const notif = await createNotif(

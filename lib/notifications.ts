@@ -1,13 +1,23 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-type Notification = {
-  id: string;
-  sender: string;
-  recipient: string;
-  msg_type: "group_alert" | "prayer_req" | "absent";
-  msg_content: string | MessageContent;
+interface Notification {
+  id: number;
   created_at: string;
-};
+  msg_type: "absent" | "prayer_req" | "group_alert";
+  msg_content: {
+    title: string;
+    content: string;
+    datetime_sent: string;
+    sender?: string;
+    event?: {
+      id: string;
+      name?: string;
+      date?: string;
+    };
+  };
+  sender: string;
+  recipient: string; // group id
+}
 
 type MessageContent = {
   title: string;
@@ -27,7 +37,9 @@ type Group = {
     name: string;
     join_code: string;
     created_by: string;
-  };
+  } | undefined;
+  name: string;
+  creator_id: string | undefined;
 };
 
 type Event = {
@@ -70,7 +82,7 @@ export async function createNotif(
   switch (msg_type) {
     case "group_alert":
       msg_content = {
-        title: `${group.groups.name} Update`,
+        title: `${group.groups?.name} Update`,
         content: details,
         datetime_sent: now,
         event: {
@@ -91,7 +103,7 @@ export async function createNotif(
 
     case "absent":
       msg_content = {
-        title: `${group.groups.name} Absence`,
+        title: `${group.groups?.name} Absence`,
         content: `${user.email || "A member"} won't be able to attend ${event?.title || "the event"}.`,
         datetime_sent: now,
       };

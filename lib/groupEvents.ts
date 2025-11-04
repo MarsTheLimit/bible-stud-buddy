@@ -22,8 +22,16 @@ export type Event = {
 
 
 export type EventGroupData = {
-  groups: {name: string}
-}
+  group_id: string;
+  groups: {
+    id: string;
+    name: string;
+    join_code: string;
+    created_by: string;
+  } | undefined;
+  name: string;
+  creator_id: string | undefined;
+};
 
 export async function getGroupEvents(supabase: SupabaseClient, groupId: string | null | undefined) {
   let query = supabase.from("events").select("*").order("date", { ascending: true });
@@ -69,7 +77,7 @@ export async function getGroupFromEvent(
   supabase: SupabaseClient,
   eventId: string,
   justName?: false
-): Promise<EventGroupData | null>;
+): Promise<EventGroupData>;
 
 export async function getGroupFromEvent(
   supabase: SupabaseClient,
