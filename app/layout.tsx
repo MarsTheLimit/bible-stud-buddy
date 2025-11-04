@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode; })
         {/* FOOTER */}
         <footer className="mt-auto py-4 bg-secondary text-white-50">
           <div className="container py-10 text-center">
-            <small>© 2025 <a href="https://marsthelimit.com" target="_blank" style={{color:"white"}}>Mars The Limit</a>. All rights reserved. <a href="/privacy-policy" style={{color:"white"}}>Privacy Policy</a> <a href="/privacy-policy" style={{color:"white"}}>Terms of Service</a></small>
+            <small>© 2025 <a href="https://marsthelimit.com" target="_blank" style={{color:"white"}}>Mars The Limit</a>. All rights reserved. <a href="/privacy-policy" style={{color:"white"}}>Privacy Policy</a> <a href="/terms-of-service" style={{color:"white"}}>Terms of Service</a></small>
           </div>
         </footer>
       </body>
