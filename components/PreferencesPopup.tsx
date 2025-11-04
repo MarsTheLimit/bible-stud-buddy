@@ -4,11 +4,11 @@ import { Modal, Spinner } from 'react-bootstrap';
 
 interface UserScheduleData {
   busyness: string;
-  other_info: string;
+  other_info: string | null;
   school_work: {
     type: string;
     hours: string;
-  };
+  } | null;
   latest_asleep: string;
   earliest_awake: string;
   morning_person: boolean;
@@ -25,6 +25,7 @@ interface JsonPopupProps {
 export default function PreferencesPopupObject({ show, onHide, data, onEdit }: JsonPopupProps) {
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
+    if (!hours) return;
     const hour = parseInt(hours);
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
@@ -68,17 +69,18 @@ export default function PreferencesPopupObject({ show, onHide, data, onEdit }: J
           </div>
 
           {/* School/Work Info */}
-          <div className="col-md-6">
-            <div className="card border-0 shadow-sm h-100">
-              <div className="card-body">
-                <h6 className="text-muted mb-2">
-                  <i className="bi bi-briefcase me-2"></i>
-                  {data.school_work.type === 'school' ? 'School' : 'Work'}
-                </h6>
-                <p className="mb-0 fs-5 fw-bold">{data.school_work.hours} hours/day</p>
+          { data.school_work && (
+            <div className="col-md-6">
+              <div className="card border-0 shadow-sm h-100">
+                <div className="card-body">
+                  <h6 className="text-muted mb-2">
+                    <i className="bi bi-briefcase me-2"></i>
+                    {data.school_work?.type === 'school' ? 'School' : 'Work'}
+                  </h6>
+                  <p className="mb-0 fs-5 fw-bold">{data.school_work?.hours} hours/day</p>
+                </div>
               </div>
-            </div>
-          </div>
+            </div>)}
 
           {/* Morning Person */}
           <div className="col-md-6">
@@ -177,19 +179,23 @@ export default function PreferencesPopupObject({ show, onHide, data, onEdit }: J
   );
 }
 
-// Example usage component
 export function PreferencesPopup({ onEdit }: {onEdit: () => void }) {
   const [showPopup, setShowPopup] = React.useState(false);
   const {
-      schedulePrefs,
-      loading
-    } = useUserAccount();
-    if (loading) return (
-    <button className="btn btn-light btn-sm m-2 my-0">Calendar Preferences
-        <Spinner animation="border" role="status">
-            <span className="visually-hidden">Loading...</span>
-        </Spinner>
-    </button>)
+    schedulePrefs,
+    loading
+  } = useUserAccount();
+  if (loading || !schedulePrefs) return (
+  <button className="btn btn-light btn-sm m-2 my-0">Calendar Preferences
+      <Spinner animation="border" role="status">
+          <span className="visually-hidden">Loading...</span>
+      </Spinner>
+  </button>)
+
+  if (!schedulePrefs) return (
+    <p>No schedule perferences</p>
+  );
+  
   const data: UserScheduleData = {
     busyness: schedulePrefs.busyness,
     other_info: schedulePrefs.other_info,

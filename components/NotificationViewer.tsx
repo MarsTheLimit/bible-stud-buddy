@@ -4,9 +4,10 @@ import { useUserAccount } from "@/lib/hooks/useUserAccount";
 import { getGroupNotifications, isUserGroupOwner } from "@/lib/notifications";
 import { useEffect, useState } from "react";
 import { Spinner } from "react-bootstrap";
+import { supabase } from "@/lib/supabaseClient";
 
 // --- Helper to delete notification ---
-async function deleteNotification(supabase: unknown, id: number) {
+async function deleteNotification(id: number) {
   const { error } = await supabase.from("user_messages").delete().eq("id", id);
   if (error) {
     console.error("Error deleting notification:", error);
@@ -52,7 +53,7 @@ export default function NotificationViewer({ groupIds }: { groupIds: string[] })
   async function handleDelete(id: number) {
     setDeleting(id);
     try {
-      await deleteNotification(supabase, id);
+      await deleteNotification(id);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
     } catch (err) {
       console.error(err);

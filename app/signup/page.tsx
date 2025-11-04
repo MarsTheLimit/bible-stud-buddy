@@ -28,6 +28,9 @@ export default function SignupPage() {
         email: data.user.email,
         group_join_code: null,
       });
+      if (insertError) {
+        setMessage("Unable to sign you up: an insert error has occured");
+      }
     }
   }
 

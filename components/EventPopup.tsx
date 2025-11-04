@@ -105,7 +105,7 @@ export default function EventPopup({ show, onClose, event, isCreator, supabase, 
           <p><strong className="text-primary">Start Time:</strong> {timeString}</p>
           <p><strong className="text-primary">End Time:</strong> {endTimeString}</p>
           <hr />
-          <p>{event.details || "No description provided."}</p>
+          <p>{event.description || "No description provided."}</p>
         </Modal.Body>
 
         <Modal.Footer>

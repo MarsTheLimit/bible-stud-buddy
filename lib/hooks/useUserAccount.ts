@@ -18,11 +18,11 @@ export type UserAccount = {
 type SchedulePrefs = {
   morning_person: boolean;
   busyness: string;
-  least_busy_days: unknown | null;
+  least_busy_days: string[];
   school_work: {type: string, hours: string} | null;
-  earliest_awake: string | null;
-  latest_asleep: string | null;
-  other_info: string | null;
+  earliest_awake: string;
+  latest_asleep: string;
+  other_info: string;
 }
 
 const DATA_SELECTION = 'account_type, trial_ends_at, trial_used, stripe_subscription_id, stripe_customer_id, google_access_token, google_refresh_token, schedule_prefs, planners, tokens_left'
@@ -33,7 +33,7 @@ type UserAccountUpdates = Partial<UserAccount & { id?: string }>;
 export function useUserAccount() {
   const { supabase, user, loading: authLoading } = useSupabase();
   const [accountData, setAccountData] = useState<UserAccount | undefined>();
-  const [schedulePrefs, setSchedulePrefs] = useState<SchedulePrefs | null>(null);
+  const [schedulePrefs, setSchedulePrefs] = useState<SchedulePrefs>();
   const [planners, setPlanners] = useState<string[] | null>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

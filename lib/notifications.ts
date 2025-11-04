@@ -1,20 +1,59 @@
-export async function getGroupNotifs(supabase : unknown, groupId: string) {
-    const { data, error } = await supabase
-        .from("user_messages")
-        .select("*")
-        .eq("recipient", groupId)
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-    if (error) throw error;
-    return data;
+type Notification = {
+  id: string;
+  sender: string;
+  recipient: string;
+  msg_type: "group_alert" | "prayer_req" | "absent";
+  msg_content: string | MessageContent;
+  created_at: string;
+};
+
+type MessageContent = {
+  title: string;
+  content: string;
+  datetime_sent: string;
+  event?: {
+    id: string[];
+    name: string[];
+    date: string[];
+  };
+};
+
+type Group = {
+  group_id: string;
+  groups: {
+    id: string;
+    name: string;
+    join_code: string;
+    created_by: string;
+  };
+};
+
+type Event = {
+  id: string;
+  title: string;
+  start: string | Date;
+  end?: string | Date;
+};
+
+export async function getGroupNotifs(supabase: SupabaseClient, groupId: string) {
+  const { data, error } = await supabase
+    .from("user_messages")
+    .select("*")
+    .eq("recipient", groupId);
+
+  if (error) throw error;
+  return data;
 }
 
 export async function createNotif(
-  supabase: unknown,
-  group: unknown,
-  event: unknown,
+  supabase: SupabaseClient,
+  group: Group,
+  event: Event | null,
   msg_type: "group_alert" | "prayer_req" | "absent",
-  details: unknown | null="",
-  anonymous: boolean=true
+  details: string = "",
+  anonymous: boolean = true
 ) {
   const { data, error: userError } = await supabase.auth.getUser();
   if (userError || !data?.user) {
@@ -26,7 +65,7 @@ export async function createNotif(
   const now = new Date().toISOString();
 
   // --- Build message content based on msg_type ---
-  let msg_content: unknown;
+  let msg_content: MessageContent;
 
   switch (msg_type) {
     case "group_alert":
@@ -37,14 +76,14 @@ export async function createNotif(
         event: {
           id: event?.id ? [event.id] : [],
           name: event?.title ? [event.title] : [],
-          date: event?.start ? [event.start] : []
+          date: event?.start ? [typeof event.start === 'string' ? event.start : event.start.toISOString()] : []
         },
       };
       break;
 
     case "prayer_req":
       msg_content = {
-        title: `${anonymous ? "Anonymous p" : "P" }rayer request for ${anonymous ? "a member" : user.email || "a member"}`,
+        title: `${anonymous ? "Anonymous p" : "P"}rayer request for ${anonymous ? "a member" : user.email || "a member"}`,
         content: details || `No details provided`,
         datetime_sent: now,
       };
@@ -84,10 +123,10 @@ export async function createNotif(
   return notif;
 }
 
-export async function getGroupNotifications(supabase: unknown, groupIds:string[]) {
+export async function getGroupNotifications(supabase: SupabaseClient, groupIds: string[]) {
   if (!groupIds || groupIds.length === 0) {
     console.log("Waiting for groups to load...");
-    return;
+    return [];
   }
   if (!Array.isArray(groupIds)) {
     console.warn("getGroupNotifications called with invalid groupIds:", groupIds);
@@ -106,7 +145,7 @@ export async function getGroupNotifications(supabase: unknown, groupIds:string[]
   }
 
   // Parse msg_content (since it's JSONB)
-  const parsed = data.map((n: unknown) => ({
+  const parsed = data.map((n: Notification) => ({
     ...n,
     msg_content:
       typeof n.msg_content === "string"
@@ -117,7 +156,7 @@ export async function getGroupNotifications(supabase: unknown, groupIds:string[]
   return parsed;
 }
 
-export async function isUserGroupOwner(supabase: unknown, userId: string, groupId: string) {
+export async function isUserGroupOwner(supabase: SupabaseClient, userId: string, groupId: string) {
   if (!groupId || !userId) return false;
 
   const { data, error } = await supabase

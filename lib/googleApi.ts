@@ -1,5 +1,5 @@
 // lib/googleApi.ts
-import { google } from "googleapis";
+import { google, calendar_v3 } from "googleapis";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
@@ -92,7 +92,7 @@ export async function fetchAllGoogleEvents(
         refresh_token: refreshToken,
     });
 
-    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+    const calendar: calendar_v3.Calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
     // --- 4. Get all calendars and FILTER OUT HOLIDAYS ---
     const calendarsRes = await calendar.calendarList.list();
@@ -123,60 +123,52 @@ export async function fetchAllGoogleEvents(
         let nextPageToken: string | undefined = undefined;
 
         do {
-            const res = await calendar.events.list({
-                calendarId: calId,
-                maxResults: 2500, // Fetch up to 2500 per calendar/page
-                singleEvents: true,
-                orderBy: "startTime",
-                pageToken: nextPageToken,
-                // Using a wide date range for demonstration, adjust as needed for efficiency
-                timeMin: new Date(2000, 0, 1).toISOString(),
-                timeMax: new Date(2100, 0, 1).toISOString(),
-            });
+          const res = await calendar.events.list({
+            calendarId: calId,
+            maxResults: 2500,
+            singleEvents: true,
+            orderBy: "startTime",
+            pageToken: nextPageToken,
+            timeMin: new Date(2010, 0, 1).toISOString(),
+            timeMax: new Date(2040, 0, 1).toISOString(),
+          }) as { data: calendar_v3.Schema$Events };
 
-            if (res.data.items) {
-                const timeZone =
-                    res.data.timeZone ||
-                    calendarsRes.data.items?.find(c => c.id === calId)?.timeZone ||
-                    "UTC";
+          if (res.data.items) {
+              const timeZone =
+                  res.data.timeZone ||
+                  calendarsRes.data.items?.find(c => c.id === calId)?.timeZone ||
+                  "UTC";
 
-                allEvents.push(
-                    ...res.data.items.map((e: unknown) => {
-                        const isAllDay = !!e.start?.date && !e.start?.dateTime;
+              allEvents.push(
+                  ...res.data.items.map((e: calendar_v3.Schema$Event) => {
+                      const isAllDay = !!e.start?.date && !e.start?.dateTime;
 
-                        let startDate: Date | null = null;
-                        let endDate: Date | null = null;
+                      let startDate: Date | null = null;
+                      let endDate: Date | null = null;
 
-                        if (isAllDay) {
-                            // All-day events are stored as dates only (e.g., "2025-10-31").
-                            // We treat them as starting at midnight on the start date.
-                            startDate = e.start?.date ? new Date(`${e.start.date}T00:00:00`) : null;
-                            endDate = e.end?.date ? new Date(`${e.end.date}T00:00:00`) : null;
-                            
-                            // Note: Google's all-day event end date is the day *after* the event ends.
-                            // The calendar library often needs the actual end day. This logic handles
-                            // converting the string date to a proper Date object.
-                        } else {
-                            // Timed events: Google provides ISO strings with timezone info.
-                            startDate = e.start?.dateTime ? new Date(e.start.dateTime) : null;
-                            endDate = e.end?.dateTime ? new Date(e.end.dateTime) : null;
-                        }
+                      if (isAllDay) {
+                          startDate = e.start?.date ? new Date(`${e.start.date}T00:00:00`) : null;
+                          endDate = e.end?.date ? new Date(`${e.end.date}T00:00:00`) : null;
+                      } else {
+                          startDate = e.start?.dateTime ? new Date(e.start.dateTime) : null;
+                          endDate = e.end?.dateTime ? new Date(e.end.dateTime) : null;
+                      }
 
-                        return {
-                            id: e.id,
-                            title: e.summary,
-                            start: startDate, // Now a Date object
-                            end: endDate,     // Now a Date object
-                            isAllDay,
-                            timeZone: e.start?.timeZone || e.end?.timeZone || timeZone,
-                            calendarId: calId,
-                            recurringEventId: e.recurringEventId,
-                        };
-                    })
-                );
-            }
+                      return {
+                          id: e.id,
+                          title: e.summary,
+                          start: startDate,
+                          end: endDate,
+                          isAllDay,
+                          timeZone: e.start?.timeZone || e.end?.timeZone || timeZone,
+                          calendarId: calId,
+                          recurringEventId: e.recurringEventId,
+                      };
+                  })
+              );
+          }
 
-            nextPageToken = res.data.nextPageToken || undefined;
+          nextPageToken = res.data.nextPageToken || undefined;
         } while (nextPageToken);
     }
 
@@ -204,8 +196,11 @@ export async function syncEventsToGoogleCalendar(
   if (fetchError || !userData)
     throw new Error("User or token data not found in Supabase.");
 
-  const {
+  let {
     google_access_token: currentAccessToken,
+  } = userData as UserTokens;
+
+  const {
     google_refresh_token: refreshToken,
     google_token_expires_at: tokenExpiryDateStr,
   } = userData as UserTokens;

@@ -1,4 +1,6 @@
-export async function createGroup(supabase: unknown, groupName: string) {
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+export async function createGroup(supabase: SupabaseClient, groupName: string) {
   const { data: userData } = await supabase.auth.getUser();
   const user = userData?.user;
   if (!user) throw new Error("You must be logged in to create a group.");
@@ -36,7 +38,7 @@ export async function createGroup(supabase: unknown, groupName: string) {
 }
 
 
-export async function joinGroup(supabase: unknown, joinCode: string) {
+export async function joinGroup(supabase: SupabaseClient, joinCode: string) {
   const { data: userData } = await supabase.auth.getUser();
   const user = userData?.user;
   if (!user) throw new Error("Not logged in");
@@ -71,7 +73,7 @@ export async function joinGroup(supabase: unknown, joinCode: string) {
   return group;
 }
 
-export async function ensureUserProfile(supabase: unknown, userId: string, email: string) {
+export async function ensureUserProfile(supabase: SupabaseClient, userId: string, email: string | undefined) {
   const { data: existingProfile } = await supabase
     .from("profiles")
     .select("id")
@@ -83,38 +85,40 @@ export async function ensureUserProfile(supabase: unknown, userId: string, email
   }
 }
 
-export async function getUserGroups(supabase: unknown) {
+export async function getUserGroups(supabase: SupabaseClient) {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   const user = userData?.user;
   if (!user) return [];
 
   if (userError) throw new Error(userError.message);
 
-  const { data: userGroups, error } = await supabase
+  // First get the user's group IDs
+  const { data: userGroupLinks, error: linkError } = await supabase
     .from("user_groups")
-    .select(`
-      group_id,
-      group_data:groups (
-        id,
-        name,
-        join_code,
-        created_by
-      )
-    `)
-  .eq("user_id", user.id);
+    .select("group_id")
+    .eq("user_id", user.id);
 
-  if (error) throw new Error(error.message);
-  if (!userGroups) return [];
+  if (linkError) throw new Error(linkError.message);
+  if (!userGroupLinks || userGroupLinks.length === 0) return [];
 
-  return userGroups
-    .filter((ug: unknown) => ug.group_data)
-    .map((ug: unknown) => ({
-      id: ug.group_data.id,
-      name: ug.group_data.name,
-      join_code: ug.group_data.join_code,
-      created_by: ug.group_data.created_by,
-      isCreator: ug.group_data.created_by === user.id,
-      user_count: 0
-    }));
+  const groupIds = userGroupLinks.map(ug => ug.group_id);
+
+  // Then fetch all the group details
+  const { data: groups, error: groupError } = await supabase
+    .from("groups")
+    .select("id, name, join_code, created_by")
+    .in("id", groupIds);
+
+  if (groupError) throw new Error(groupError.message);
+  if (!groups) return [];
+
+  return groups.map(group => ({
+    id: group.id,
+    name: group.name,
+    join_code: group.join_code,
+    created_by: group.created_by,
+    isCreator: group.created_by === user.id,
+    user_count: 0
+  }));
 }
 
