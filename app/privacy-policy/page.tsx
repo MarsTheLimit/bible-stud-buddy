@@ -15,8 +15,7 @@ const defaultProps: PrivacyPolicyProps = {
 };
 
 /**
- * Default Privacy Policy Component using Bootstrap 5 classes
- * styled to resemble the startbootstrap-personal template structure.
+ * Updated Privacy Policy Component
  */
 const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
   companyName,
@@ -25,10 +24,6 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
   contactEmail,
   contactPageUrl,
 }) => {
-
-  // --- Utility Styles (Mimicking startbootstrap-personal CSS) ---
-  // If you have imported your theme's custom CSS, you can replace these inline styles
-  // with your theme's class names (e.g., 'text-primary' or 'subheading').
   const subheadingStyle: React.CSSProperties = {
     textTransform: 'uppercase',
     fontWeight: '700',
@@ -37,95 +32,115 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
   };
 
   return (
-    // The p-0 and container-fluid are standard Next.js page wrappers
     <div className="container-fluid p-0">
       <section className="p-4 p-lg-5" id="privacy-policy">
         <div className="container" style={{ maxWidth: '900px' }}>
           
-          <h1 className="mb-5 display-3 fw-bold text-primary">
-            Privacy Policy
-          </h1>
-          <p className="mb-5 lead">
-            **Last updated: {lastUpdated}**
-          </p>
+          <h1 className="mb-5 display-3 fw-bold text-primary">Privacy Policy</h1>
+          <p className="mb-5 lead"><strong>Last updated: {lastUpdated}</strong></p>
 
-          {/* --- Section 1: Introduction --- */}
+          {/* 1. Introduction */}
           <div className="mb-5">
             <h2 className="mb-3" style={subheadingStyle}>1. Introduction</h2>
             <p>
-              {companyName} (&quot;us&quot;, &quot;we&quot;, or &quot;our&quot;) operates the {websiteName} website (the &quot;Service&quot;).
-              This page informs you of our policies regarding the collection, use, and disclosure of Personal Data when you use our Service. By using the Service, you agree to the collection and use of information in accordance with this policy.
+              {companyName} (&quot;us&quot;, &quot;we&quot;, or &quot;our&quot;) operates the {websiteName} website (the &quot;Service&quot;). 
+              This Privacy Policy explains how we collect, use, and protect your personal information when you use the Service. 
+              By using {websiteName}, you agree to the practices described below.
             </p>
           </div>
 
-          {/* --- Section 2: Information Collection and Use --- */}
+          {/* 2. Information Collection and Use */}
           <div className="mb-5">
-            <h2 className="mb-3" style={subheadingStyle}>2. Information Collection and Use</h2>
-            <p>
-              We collect several different types of information for various purposes to provide and improve our Service to you.
-            </p>
+            <h2 className="mb-3" style={subheadingStyle}>2. Information We Collect</h2>
+
             <h3 className="mb-2 text-primary">Personal Data</h3>
             <p>
-              While using our Service, we may ask you to provide us with certain personally identifiable information (&quot;Personal Data&quot;), including:
+              We may collect personally identifiable information, including:
             </p>
             <ul>
               <li>Email address</li>
-              <li>Usage Data (See below)</li>
+              <li>Usage data (e.g., IP address, browser type, time on site)</li>
             </ul>
 
-            <h3 className="mb-2 mt-4 text-primary">Usage Data</h3>
+            <h3 className="mb-2 mt-4 text-primary">Calendar Data</h3>
             <p>
-              We may also collect information that your browser sends whenever you visit our Service, such as your computer&apos;s Internet Protocol address (e.g., IP address), browser type, time spent on pages, and other diagnostic data.
+              If you connect your Google Calendar to {websiteName}, we request permission to:
+            </p>
+            <ul>
+              <li>Create and edit a dedicated calendar for your Bible study plan.</li>
+              <li>Read events from your other calendars in order to intelligently schedule your study sessions without conflicts.</li>
+            </ul>
+            <p>
+              <strong>Important:</strong> We only create/edit one dedicated calendar. Reading other calendars is solely used to prevent scheduling conflicts and personalize your plan. We do not make any changes to your existing calendars or events.
+            </p>
+
+            <h3 className="mb-2 mt-4 text-primary">AI Data Processing (OpenAI)</h3>
+            <p>
+              {websiteName} uses an AI assistant to generate a personalized Bible study plan based on your progress and preferences. 
+              The AI receives:
+            </p>
+            <ul>
+              <li>Existing events from your connected calendar (to avoid conflicts)</li>
+              <li>Your study name, target end date, and scheduling preferences</li>
+            </ul>
+            <p>
+              The AI generates a structured study schedule and returns it to the app. 
+              We <strong>do not store this data outside of your session</strong> except for the study plan added to your dedicated calendar. 
+              No other personal information is shared with OpenAI.
             </p>
           </div>
 
-          {/* --- Section 3: Use of Data --- */}
+          {/* 3. Use of Data */}
           <div className="mb-5">
-            <h2 className="mb-3" style={subheadingStyle}>3. Use of Data</h2>
-            <p>
-              {companyName} uses the collected data for various purposes:
-            </p>
+            <h2 className="mb-3" style={subheadingStyle}>3. How We Use Your Data</h2>
             <ul>
-              <li>To provide and maintain the Service.</li>
-              <li>To notify you about changes to our Service.</li>
-              <li>To provide customer care and support.</li>
-              <li>To monitor the usage and improve the Service.</li>
+              <li>To create and maintain your personalized Bible study plan.</li>
+              <li>To schedule study events without conflicting with your existing calendar events.</li>
+              <li>To provide support and notify you about changes to the Service.</li>
+              <li>To analyze anonymized usage data for improving {websiteName}.</li>
             </ul>
           </div>
-          
-          {/* --- Section 4: Cookies --- */}
+
+          {/* 4. Cookies and Tracking */}
           <div className="mb-5">
-            <h2 className="mb-3" style={subheadingStyle}>4. Tracking & Cookies Data</h2>
+            <h2 className="mb-3" style={subheadingStyle}>4. Cookies and Tracking</h2>
             <p>
-              We use **cookies** and similar tracking technologies to track the activity on our Service. Cookies are small data files stored on your device.
-              You can instruct your browser to refuse all cookies. If you do not accept cookies, you may not be able to use some portions of our Service.
-            </p>
-            <p>
-              We use Vercel Analytics to monitor website performance and traffic. Vercel Analytics collects non-personal, aggregated data such as page views, load times, and referrer URLs to help us understand how users engage with our site and to improve reliability and speed.
-            </p>
-            <p>
-              Vercel Analytics does not use cookies, store personally identifiable information, or track users across sites. All data collected is anonymized and processed in accordance with <a href="https://vercel.com/legal/privacy-policy" target="_blank">Vercel&apos;s Privacy Policy</a>.
-            </p>
-            <p>
-              We use Stripe, a third-party payment processor, to handle all transactions securely. When you make a purchase or payment through our website, your payment information is processed directly by Stripe and is subject to <a href="https://stripe.com/privacy" target="_blank">Stripe&apos;s Privacy Policy</a>.
-            </p><p>
-              We do not store or have access to your full payment details, such as your credit card number or bank account information. Stripe may collect and process information such as your name, email address, billing address, and payment method to complete the transaction and prevent fraud.
-            </p><p>
-              Stripe uses industry-standard encryption and security practices to protect your payment information. Any data shared with Stripe is handled in compliance with applicable laws, including the General Data Protection Regulation (GDPR) and the California Consumer Privacy Act (CCPA).
-            </p><p>
-              By making a payment through our site, you agree to the processing of your information by Stripe in accordance with their terms and privacy practices.
+              We use cookies and similar technologies for website functionality and analytics. 
+              We use Vercel Analytics to monitor website performance; this data is aggregated and anonymized. 
+              We also use Stripe for secure payment processing; payment details are handled by Stripe and not stored by us.
             </p>
           </div>
 
-          {/* --- Section 5: Contact Us --- */}
+          {/* 5. Sharing Your Data */}
           <div className="mb-5">
-            <h2 className="mb-3" style={subheadingStyle}>5. Contact Us</h2>
+            <h2 className="mb-3" style={subheadingStyle}>5. Sharing Your Data</h2>
             <p>
-              If you have any questions about this Privacy Policy, please contact us:
+              We do not share your personal data, calendar events, or study plan data with third parties except:
             </p>
             <ul>
-              <li>By email: <a href={`mailto:${contactEmail}`}>{contactEmail}</a></li>
-              <li>By visiting our contact page: <a href={contactPageUrl}>{contactPageUrl}</a></li>
+              <li>With OpenAI, solely to generate your Bible study plan, as described above.</li>
+              <li>With Stripe for payment processing (if applicable).</li>
+              <li>As required by law or to protect our rights.</li>
+            </ul>
+          </div>
+
+          {/* 6. Data Security */}
+          <div className="mb-5">
+            <h2 className="mb-3" style={subheadingStyle}>6. Data Security</h2>
+            <p>
+              We implement reasonable security measures to protect your data. However, no system is completely secure; we cannot guarantee absolute security.
+            </p>
+          </div>
+
+          {/* 7. Contact */}
+          <div className="mb-5">
+            <h2 className="mb-3" style={subheadingStyle}>7. Contact Us</h2>
+            <p>
+              If you have questions about this Privacy Policy, please contact us:
+            </p>
+            <ul>
+              <li>Email: <a href={`mailto:${contactEmail}`}>{contactEmail}</a></li>
+              <li>Contact page: <a href={contactPageUrl}>{contactPageUrl}</a></li>
             </ul>
           </div>
 
@@ -136,5 +151,5 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
 };
 
 export default function PrivacyPage() {
-    return <PrivacyPolicy {...defaultProps} />;
+  return <PrivacyPolicy {...defaultProps} />;
 }
