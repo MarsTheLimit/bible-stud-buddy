@@ -2,15 +2,26 @@
 import { addEventsToPlanner, createPlanner } from "@/lib/planners";
 import { useState } from "react";
 import { Spinner } from "react-bootstrap";
-import { updateUserTokens } from "@/lib/hooks/useUserAccount";
+import { updateUserTokens, useUserAccount } from "@/lib/hooks/useUserAccount";
 
 interface ScheduleResponse {
     message: string;
-    scheduleEvents: unknown[];
+    scheduleEvents: ScheduleEvents[];
     usage: number;
 }
 
-export default function CreateStudyPlan({ schedulePrefs, onSubmit, user, refresh, tokensLeft }: { schedulePrefs: unknown, userEvents: unknown[], onSubmit: () => void, user: unknown, refresh: () => void, tokensLeft: number }) {
+type ScheduleEvents = {
+    title: string;
+    description: string;
+    start: string;
+    end: string;
+}
+
+export default function CreateStudyPlan({ schedulePrefs, onSubmit, tokensLeft }: { schedulePrefs: unknown, userEvents: unknown[], onSubmit: () => void, tokensLeft: number }) {
+    const { 
+        user,
+        refresh
+    } = useUserAccount();
     const [title, setTitle] = useState('');
     const [studyArea, setStudyArea] = useState('');
     const [loading, setLoading] = useState(false);
@@ -39,6 +50,7 @@ export default function CreateStudyPlan({ schedulePrefs, onSubmit, user, refresh
 
         if (tokensLeft >= 2000) {
             try {
+                if (!user) return;
                 const response = await fetch(apiRoute, {
                     method: 'POST',
                     headers: {

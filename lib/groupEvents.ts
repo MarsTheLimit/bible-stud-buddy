@@ -18,7 +18,8 @@ export type Event = {
   group: undefined;
   isGoogleEvent: boolean;
   idx: number;
-}
+};
+
 
 export type EventGroupData = {
   groups: {name: string}
@@ -58,7 +59,23 @@ export async function isUserEventCreator(supabase: SupabaseClient, userId: strin
   return data?.created_by === userId;
 }
 
-export async function getGroupFromEvent(supabase: SupabaseClient, eventId: string, justName: boolean=false) {
+export async function getGroupFromEvent(
+  supabase: SupabaseClient,
+  eventId: string,
+  justName: true
+): Promise<string | null>;
+
+export async function getGroupFromEvent(
+  supabase: SupabaseClient,
+  eventId: string,
+  justName?: false
+): Promise<EventGroupData | null>;
+
+export async function getGroupFromEvent(
+  supabase: SupabaseClient,
+  eventId: string,
+  justName: boolean = false
+): Promise<string | EventGroupData | null> {
   const { data, error } = await supabase
     .from("events")
     .select("group_id, groups(name)")
@@ -148,20 +165,21 @@ export async function loadGoogleEvents(
       }
     }
 
-    return []; // Add return statement for when no Google token exists
+    return [];
   } catch (error) {
     console.error("Error fetching Google events:", error);
-    return []; // Add return statement for outer catch
+    return [];
   }
 }
 
 export async function loadEvents(
   supabase: SupabaseClient, 
   isPersonal: boolean, 
-  user: User, 
+  user: User | null, 
   groupIds: string[],
   maxDate: Date | null = null,
 ) : Promise<Event[]> {
+  if (!user) return [];
   try {
     let combinedEvents: Event[] = [];
 
@@ -216,58 +234,25 @@ export async function loadEvents(
               return {
                 id: e.id,
                 title: groupName ? `${groupName} - ${e.title}` : e.title,
-                description: e.description,
+                description: e.description ?? "",
+                date: new Date(e.date),
+                end_date: new Date(e.end_date),
+                schedule_id: e.schedule_id ?? "",
                 start: new Date(e.date),
                 end: new Date(e.end_date),
+                calendarId: "", // default empty string
                 isPersonal: false,
                 isCreator: await isUserEventCreator(supabase, user.id, e.id),
-                backgroundColor: e.schedule_id ? "#ff0000" : "#3b92f6ff", // red if planner, else blue
+                backgroundColor: e.schedule_id ? "#ff0000" : "#3b92f6ff",
                 groupName: groupName,
+                group: undefined,
+                isGoogleEvent: false,
                 idx,
               };
             })
           );
           combinedEvents = [...combinedEvents, ...filterByDateRange(groupMapped)];
         }
-
-        // --- Google Calendar events ---
-        // if (accountData?.google_access_token && proAccess) {
-        //   try {
-        //     const res = await fetch("/api/google/events", {
-        //       method: "POST",
-        //       credentials: 'include',
-        //       headers: { 'Content-Type': 'application/json' },
-        //       body: JSON.stringify({
-        //         access_token: accountData.google_access_token,
-        //         refresh_token: accountData.google_refresh_token,
-        //       }),
-        //     });
-
-        //     if (res.ok) {
-        //       const data = await res.json();
-        //       const googleMapped = data.events.map((e: Event, idx: number) => ({
-        //         id: e.id,
-        //         title: `${e.title} (Google Calendar)`,
-        //         start: new Date(e.start),
-        //         end: new Date(e.end),
-        //         isPersonal: false,
-        //         isCreator: false,
-        //         backgroundColor: "#f4b400ff", // keep Google events yellow
-        //         groupName: e.calendarId !== "primary" ? e.calendarId : null,
-        //         isGoogleEvent: true,
-        //         idx,
-        //       }));
-
-        //       const filteredGoogleEvents = filterByDateRange(googleMapped);
-        //       if (setGoogleEvents) setGoogleEvents(filteredGoogleEvents);
-        //       else combinedEvents = [...combinedEvents, ...filteredGoogleEvents];
-        //     } else {
-        //       console.error("Google events fetch error");
-        //     }
-        //   } catch (error) {
-        //     console.error("Error fetching Google events:", error);
-        //   }
-        // }
       }
     } else {
       // --- Group calendar: only first group ---
@@ -280,13 +265,19 @@ export async function loadEvents(
             return {
               id: e.id,
               title: e.title,
-              details: e.description,
+              description: e.description ?? "",
+              date: new Date(e.date),
+              end_date: new Date(e.end_date),
+              schedule_id: e.schedule_id ?? "",
               start: new Date(e.date),
               end: new Date(e.end_date),
+              calendarId: "",
               isPersonal: false,
               isCreator: await isUserEventCreator(supabase, user.id, e.id),
-              backgroundColor: e.schedule_id ? "#ff0000" : "#3b92f6ff", // planner red else blue
+              backgroundColor: e.schedule_id ? "#ff0000" : "#3b92f6ff",
               groupName: groupName,
+              group: undefined,
+              isGoogleEvent: false,
               idx,
             };
           })

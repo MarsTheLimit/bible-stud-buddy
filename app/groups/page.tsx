@@ -16,25 +16,23 @@ export default function GroupsPage() {
   const [messageError, setMessageError] = useState(false);
   const [groupCount, setGroupCount] = useState<number>(0);
 
-  // Fetch how many groups user has created
-  async function getUserGroupCount() {
-    if (!user) return 0;
-    const { count, error } = await supabase
-      .from("groups")
-      .select("*", { count: "exact", head: true })
-      .eq("created_by", user.id);
-    if (error) {
-      console.error("Failed to count user groups:", error);
-      return 0;
-    }
-    return count || 0;
-  }
-
   useEffect(() => {
+    async function getUserGroupCount() {
+      if (!user) return 0;
+      const { count, error } = await supabase
+        .from("groups")
+        .select("*", { count: "exact", head: true })
+        .eq("created_by", user.id);
+      if (error) {
+        console.error("Failed to count user groups:", error);
+        return 0;
+      }
+      return count || 0;
+    }
     if (user) {
       getUserGroupCount().then(setGroupCount);
     }
-  }, [user]);
+  }, [supabase, user]);
 
   const isLimitedPlan = accessLevel === "free" || hasActiveTrial;
   const reachedGroupLimit = isLimitedPlan && groupCount >= 1;
@@ -55,8 +53,13 @@ export default function GroupsPage() {
       setMessage(`Successfully created '${group.name}'! Join code: ${group.join_code}`);
       setGroupCount(groupCount + 1);
     } catch (err: unknown) {
-      setMessageError(true);
-      setMessage(err.message);
+      if (err instanceof Error) {
+        setMessageError(true);
+        setMessage(err.message);
+      } else {
+        setMessageError(true);
+        setMessage("Unknown error");
+      }
     }
   }
 
@@ -69,8 +72,13 @@ export default function GroupsPage() {
       setMessageError(false);
       setMessage(`Successfully joined ${group.name}!`);
     } catch (err: unknown) {
-      setMessageError(true);
-      setMessage(err.message);
+      if (err instanceof Error) {
+        setMessageError(true);
+        setMessage(err.message);
+      } else {
+        setMessageError(true);
+        setMessage("Unknown error");
+      }
     }
   }
 

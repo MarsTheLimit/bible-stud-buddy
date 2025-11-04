@@ -142,7 +142,7 @@ export default function PricingPage() {
             buttonText: freeButtonText,
             buttonStyle: freeButtonStyle,
             buttonDisabled: freeButtonDisabled,
-            popular: mostPopular === 'free',
+            popular: 'free',
             planType: 'free'
         },
         {

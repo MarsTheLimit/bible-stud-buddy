@@ -33,9 +33,9 @@ interface StudyPlanData {
 // Next.js App Router POST handler
 export async function POST(request: Request) {
     // Initialize OpenAI client
-    // const openai = new OpenAI({
-    //   apiKey: process.env.OPENAI_API_KEY,
-    // });
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
     
     try {
         const { name, userPrefs, dateEnds, studyArea, userEvents } : StudyPlanData = await request.json();
@@ -90,47 +90,45 @@ export async function POST(request: Request) {
             **Generate ONLY the JSON array.**
         `;
 
-        // console.log(prompt)
+        // 3. Call OpenAI with JSON Mode
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: "You are a professional scheduler that outputs ONLY a valid JSON array of structured events. Do not include any preceding or trailing text."
+                },
+                {
+                    role: "user",
+                    content: prompt
+                }
+            ],
+            response_format: { type: "json_object" }, // Crucial for reliable JSON output
+            temperature: 0.5,
+        });
 
-        // // 3. Call OpenAI with JSON Mode
-        // const completion = await openai.chat.completions.create({
-        //     model: "gpt-4o-mini",
-        //     messages: [
-        //         {
-        //             role: "system",
-        //             content: "You are a professional scheduler that outputs ONLY a valid JSON array of structured events. Do not include any preceding or trailing text."
-        //         },
-        //         {
-        //             role: "user",
-        //             content: prompt
-        //         }
-        //     ],
-        //     response_format: { type: "json_object" }, // Crucial for reliable JSON output
-        //     temperature: 0.5,
-        // });
-
-        // // 4. Extract and Parse the JSON output
-        // const jsonString = completion.choices[0].message.content;
-        // if (!jsonString) {
-        //      return NextResponse.json({ error: 'OpenAI returned empty content.' }, { status: 500 });
-        // }
+        // 4. Extract and Parse the JSON output
+        const jsonString = completion.choices[0]?.message.content;
+        if (!jsonString) {
+             return NextResponse.json({ error: 'OpenAI returned empty content.' }, { status: 500 });
+        }
         
-        // // The expected output is an object containing the array, so we must parse it carefully
-        // const responseData = JSON.parse(jsonString);
+        // The expected output is an object containing the array, so we must parse it carefully
+        const responseData = JSON.parse(jsonString);
         
-        // // Assuming the model returns the array directly or inside a property like { events: [] }
-        // // We'll try to handle the JSON gracefully:
-        // const scheduleArray: Event[] = Array.isArray(responseData) 
-        //     ? responseData 
-        //     : responseData.schedule || responseData.events || []; // Check common wrapping keys
+        // Assuming the model returns the array directly or inside a property like { events: [] }
+        // We'll try to handle the JSON gracefully:
+        const scheduleArray: Event[] = Array.isArray(responseData) 
+            ? responseData 
+            : responseData.schedule || responseData.events || []; // Check common wrapping keys
 
-        // if (scheduleArray.length === 0) {
-        //      return NextResponse.json({ error: 'OpenAI returned a JSON object but no events were found.' }, { status: 500 });
-        // }
+        if (scheduleArray.length === 0) {
+             return NextResponse.json({ error: 'OpenAI returned a JSON object but no events were found.' }, { status: 500 });
+        }
 
-        // if (!completion.usage) {
-        //   return NextResponse.json({ error: 'OpenAI returned a JSON object with events but no token amount.' }, { status: 500 });
-        // }
+        if (!completion.usage) {
+          return NextResponse.json({ error: 'OpenAI returned a JSON object with events but no token amount.' }, { status: 500 });
+        }
 
         // 5. Success response
         return NextResponse.json({ 

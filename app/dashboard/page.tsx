@@ -293,7 +293,6 @@ export default function Dashboard() {
                                 <div className="m-2 p-1">
                                   {((planners?.length ?? 0) === 0) ? (
                                     <CreateStudyPlan
-                                      user={user}
                                       schedulePrefs={schedulePrefs}
                                       userEvents={events}
                                       onSubmit={async () => {
@@ -303,7 +302,6 @@ export default function Dashboard() {
                                         console.log("Returning: ", events);
                                         return events;
                                       }}
-                                      refresh={refresh}
                                       tokensLeft={(accountData?.tokens_left ?? 0)}
                                     />
                                   ) : (
