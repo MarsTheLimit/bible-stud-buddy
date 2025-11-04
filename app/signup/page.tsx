@@ -21,17 +21,17 @@ export default function SignupPage() {
       setMessage("Signup successful! Check your email to confirm your account.");
     }
 
-    if (data.user) {
-      // Create a matching profile for this new user
-      const { error: insertError } = await supabase.from("profiles").insert({
-        id: data.user.id,
-        email: data.user.email,
-        group_join_code: null,
-      });
-      if (insertError) {
-        setMessage("Unable to sign you up: an insert error has occured");
-      }
-    }
+    // if (data.user) {
+    //   // Create a matching profile for this new user
+    //   const { error: insertError } = await supabase.from("profiles").insert({
+    //     id: data.user.id,
+    //     email: data.user.email,
+    //     group_join_code: null,
+    //   });
+    //   if (insertError) {
+    //     setMessage("Unable to sign you up: an insert error has occured");
+    //   }
+    // }
   }
 
   return (
