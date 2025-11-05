@@ -3,6 +3,7 @@
 import { useUserAccount } from '@/lib/hooks/useUserAccount';
 import ProPill from './ProPill';
 import Link from 'next/link';
+import Logo from './Logo';
 
 export default function Navbar() {
   const { 
@@ -16,9 +17,7 @@ export default function Navbar() {
     <nav className="navbar navbar-expand-lg navbar-light bg-white py-3">
       <div className="container px-5">
         <Link className="navbar-brand" href="/">
-          <span className="fw-bolder text-primary">
-            Bible Study Buddy
-          </span>
+          <Logo />
         </Link>
         <ProPill accessLevel={accessLevel} hasActiveTrial={hasActiveTrial} />
         <button
