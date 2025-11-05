@@ -1,6 +1,11 @@
 import ContactForm from "@/components/ContactForm";
 import Image from 'react-bootstrap/Image';
 
+export const metadata = {
+  title: "Home | Bible Study Buddy",
+  description: "Grow closer to God by generating a personalized Bible Study plan fitted around your schedule using AI. Create and join groups to study with your community.",
+};
+
 export default function Home() {
   return (
     <main className="flex-shrink-0">

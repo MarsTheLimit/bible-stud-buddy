@@ -2,7 +2,7 @@
 
 import { createGroup, joinGroup } from "@/lib/group";
 import { useSupabase } from "@/components/SupabaseProvider";
-import { useUserAccount } from "@/lib/hooks/useUserAccount"; // make sure this path is correct
+import { useUserAccount } from "@/lib/hooks/useUserAccount";
 import { useEffect, useState } from "react";
 
 export default function GroupsPage() {

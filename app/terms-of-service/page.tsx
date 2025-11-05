@@ -1,3 +1,7 @@
+export const metadata = {
+  title: "Terms of Service",
+};
+
 interface TermsOfServiceProps {
   companyName: string;
   websiteName: string;

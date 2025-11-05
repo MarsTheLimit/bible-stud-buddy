@@ -1,3 +1,7 @@
+export const metadata = {
+  title: "Privacy Policy",
+};
+
 interface PrivacyPolicyProps {
   companyName: string;
   websiteName: string;
