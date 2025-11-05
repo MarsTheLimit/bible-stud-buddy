@@ -17,13 +17,22 @@ const locales: Record<string, unknown> = {
 };
 
 const LoadingSpinner = () => (
-    <div className="text-center py-5">
-      <Spinner animation="border" role="status" variant="primary" className="mb-3">
-        <span className="visually-hidden">Loading...</span>
-      </Spinner>
-      <p className="text-muted">Loading calendar events...</p>
-    </div>
-  );
+  <div className="text-center py-5">
+    <Spinner animation="border" role="status" variant="primary" className="mb-3">
+      <span className="visually-hidden">Loading...</span>
+    </Spinner>
+    <p className="text-muted">Loading calendar events...</p>
+  </div>
+);
+
+const LoadingGoogleSpinner = () => (
+  <div className="text-center py-5">
+    <Spinner animation="border" role="status" variant="primary" className="mb-3">
+      <span className="visually-hidden">Loading...</span>
+    </Spinner>
+    <p className="text-muted">Loading google calendar events...</p>
+  </div>
+);
 
 const localizer = dateFnsLocalizer({
   format,
@@ -50,6 +59,7 @@ export default function EventsCalendar({
         accountData, 
         loading,
         hasProAccess,
+        calendarUsed,
     } = useUserAccount();
     const [view, setView] = useState<View>("month");
     const [date, setDate] = useState(new Date());
@@ -70,6 +80,7 @@ export default function EventsCalendar({
     const [syncMsg, setSyncMsg] = useState("Sync Now")
 
     const [loadingEvents, setLoadingEvents] = useState(false)
+    const [loadingGoogleEvents, setLoadingGoogleEvents] = useState(false)
 
   async function handleAddEvent() {
     if (!newEvent.title || !newEvent.date) return;
@@ -102,11 +113,15 @@ export default function EventsCalendar({
     : events;
 
   useEffect(() => {
-  const fetchEvents = async () => {
-    setLoadingEvents(true);
-    setEvents(await loadEvents(supabase, isPersonal, user, groupIds));
-    if (isPersonal) setGoogleEvents(await loadGoogleEvents(accountData, false));
-    setLoadingEvents(false);
+    const fetchEvents = async () => {
+      setLoadingEvents(true);
+      setEvents(await loadEvents(supabase, isPersonal, user, groupIds));
+      setLoadingEvents(false);
+      if (isPersonal) {
+        setLoadingGoogleEvents(true);
+        setGoogleEvents(await loadGoogleEvents(accountData, false));
+        setLoadingGoogleEvents(false);
+      }
   };
 
   if (accountData && !loading) {
@@ -168,9 +183,9 @@ export default function EventsCalendar({
             </div>
           </div>
           <div className="p-6">
-            {loadingEvents ? (
-              <LoadingSpinner />
-            ) : (
+            {loadingEvents && (<LoadingSpinner />)}
+            {loadingGoogleEvents && (<LoadingGoogleSpinner />)}
+            { (!loadingEvents && !loadingGoogleEvents) && (
               <Calendar
                 localizer={localizer}
                 events={displayedEvents}
@@ -193,7 +208,7 @@ export default function EventsCalendar({
             )}
           </div>
 
-          { (isPersonal && hasProAccess && !loadingEvents) && (<div className="mt-2 p-2">
+          { (isPersonal && hasProAccess && !loadingEvents && calendarUsed.includes("google")) && (<div className="mt-2 p-2">
             <h2>Data Syncing to Calendars</h2>
             <p className="fw-light">Adds all events from this app to a new calendar in your calendar app</p>
             <Form>
@@ -216,6 +231,13 @@ export default function EventsCalendar({
                 }}
               >{syncMsg}</Button>
             </Form>
+            <p className="text-muted small mt-3">
+              By clicking this button, you allow this app to create a new calendar in your Google Calendar and add your Bible Study Buddy events to it. 
+              Your Google data is used only to sync and display your events and is never shared with third parties. 
+              <a href="/privacy-policy" rel="noopener noreferrer" className="text-primary underline">
+                Privacy Policy
+              </a>.
+            </p>
           </div>)}
         </div>
 

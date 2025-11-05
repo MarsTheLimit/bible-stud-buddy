@@ -268,12 +268,23 @@ export default function Dashboard() {
                             { calendarUsed.includes("google") ? (
                               <span className="fw-light fs-5 text-secondary">(Using Google Calendar)</span>
                             ) : (
-                              <span className="fw-light fs-5 text-secondary">No Calendar Connected</span>
+                              <h2 className="fs-5 text-secondary">No Calendar Connected</h2>
                             )}
                             { schedulePrefs && (<PreferencesPopup onEdit={handleUpdateUserPreferences}/>) }
                           </span>
                           { !calendarUsed.includes("google") ? (
-                            <button className="btn btn-primary" onClick={connectGoogle}>Connect Google Calendar</button>
+                            <>
+                              <div className="d-flex align-items-center justify-content-center text-center my-xl-5">
+                                <button className="btn btn-primary my-xl-5" onClick={connectGoogle}>Connect Google Calendar</button>
+                              </div>
+                              <p className="mt-auto text-muted small">
+                                By clicking this button, you allow this app to view your Google Calendar events to display your schedule. 
+                                If you create a Bible study plan with AI, your data is used only to personalize your plan and is never shared with third parties. 
+                                <a href="/privacy-policy" rel="noopener noreferrer" className="text-primary underline">
+                                  Privacy Policy
+                                </a>.
+                              </p>
+                            </>
                           ) : (
                             <>
                               {((accountData?.tokens_left ?? 0) >= 2000) ? (<span>You can make about {Math.ceil((accountData?.tokens_left ?? 0) / 5000)} new planners this month</span>):
@@ -531,7 +542,7 @@ async function connectGoogle() {
     return;
   }
 
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI!;
+  const redirectUri = `${process.env.NEXT_PUBLIC_PROJECT_URL!}api/google/callback`
 
   const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   authUrl.searchParams.set("client_id", process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!);

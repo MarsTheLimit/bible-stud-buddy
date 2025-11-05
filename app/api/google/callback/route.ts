@@ -16,10 +16,12 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing user_id (state)" }, { status: 400 });
   }
 
+  const redirectUri = `${process.env.NEXT_PUBLIC_PROJECT_URL!}api/google/callback`
+
   const oauth2Client = new google.auth.OAuth2(
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
     process.env.GOOGLE_CLIENT_SECRET!,
-    process.env.GOOGLE_REDIRECT_URI!
+    redirectUri
   );
 
   const { tokens } = await oauth2Client.getToken(code!);
@@ -34,5 +36,5 @@ export async function GET(req: Request) {
     })
     .eq("id", userId);
 
-  return NextResponse.redirect(`${process.env.PROJECT_URL!}dashboard`);
+  return NextResponse.redirect(`${process.env.NEXT_PUBLIC_PROJECT_URL!}dashboard`);
 }
