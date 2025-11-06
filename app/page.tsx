@@ -20,7 +20,7 @@ export default function Home() {
                   <span className="text-gradient d-inline">Bible Study Buddy</span>
                 </h1>
                 <p className="lead text-muted">
-                  Organize your Bible study with the help of AI
+                  Organize your personal and community Bible studies with the help of AI
                 </p>
                 <a className="btn btn-primary btn-lg px-5 py-3 me-sm-3 fs-6 fw-bolder" href="#about">
                   Learn More
@@ -63,7 +63,7 @@ export default function Home() {
             <div className="col-md-6">
               <h2 className="fw-bolder">What is this tool?</h2>
               <p className="lead text-muted">
-                The AI Bible Assistant helps you engage with the Bible in a whole new way. You can put together a reading plan with in depth AI assistance to help you understand and apply Scripture.
+                The AI Bible Assistant helps you engage with the Bible in a whole new way. You can put together a reading plan that fits around your schedule. Bible Study Buddy allows you to connect your personal calendar in order to make a reading plan tailored to your schedule. By using our groups feature, you can connect with community and plan Bible studies easily and all in one place.
               </p>
             </div>
             <div className="col-md-6 text-center">
@@ -84,7 +84,7 @@ export default function Home() {
           <div className="text-center mb-5">
             <h2 className="fw-bolder">Why You&#39;ll Love It</h2>
             <p className="text-muted">
-              Simple tools, powerful results. Everything you need to focus, create, and grow in Christ.
+              Simple tools, powerful results. Everything you need to organize your Bible studies and grow in Christ
             </p>
           </div>
           <div className="row gx-5">
