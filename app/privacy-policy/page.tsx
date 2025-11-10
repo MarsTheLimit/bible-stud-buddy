@@ -29,38 +29,41 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
   contactPageUrl,
 }) => {
   const subheadingStyle: React.CSSProperties = {
-    textTransform: 'uppercase',
-    fontWeight: '700',
+    textTransform: "uppercase",
+    fontWeight: "700",
     fontFamily: "'Saira Extra Condensed', sans-serif",
-    fontSize: '1.5rem',
+    fontSize: "1.5rem",
   };
 
   return (
     <div className="container-fluid p-0">
       <section className="p-4 p-lg-5" id="privacy-policy">
-        <div className="container" style={{ maxWidth: '900px' }}>
-          
+        <div className="container" style={{ maxWidth: "900px" }}>
           <h1 className="mb-5 display-3 fw-bold text-primary">Privacy Policy</h1>
-          <p className="mb-5 lead"><strong>Last updated: {lastUpdated}</strong></p>
+          <p className="mb-5 lead">
+            <strong>Last updated: {lastUpdated}</strong>
+          </p>
 
           {/* 1. Introduction */}
           <div className="mb-5">
-            <h2 className="mb-3" style={subheadingStyle}>1. Introduction</h2>
+            <h2 className="mb-3" style={subheadingStyle}>
+              1. Introduction
+            </h2>
             <p>
-              {companyName} (&quot;us&quot;, &quot;we&quot;, or &quot;our&quot;) operates the {websiteName} website (the &quot;Service&quot;). 
-              This Privacy Policy explains how we collect, use, and protect your personal information when you use the Service. 
+              {companyName} (&quot;us&quot;, &quot;we&quot;, or &quot;our&quot;) operates the {websiteName} website (the &quot;Service&quot;).
+              This Privacy Policy explains how we collect, use, and protect your personal information when you use the Service.
               By using {websiteName}, you agree to the practices described below.
             </p>
           </div>
 
           {/* 2. Information Collection and Use */}
           <div className="mb-5">
-            <h2 className="mb-3" style={subheadingStyle}>2. Information We Collect</h2>
+            <h2 className="mb-3" style={subheadingStyle}>
+              2. Information We Collect
+            </h2>
 
             <h3 className="mb-2 text-primary">Personal Data</h3>
-            <p>
-              We may collect personally identifiable information, including:
-            </p>
+            <p>We may collect personally identifiable information, including:</p>
             <ul>
               <li>Email address</li>
               <li>Usage data (e.g., IP address, browser type, time on site)</li>
@@ -72,15 +75,16 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
             </p>
             <ul>
               <li>Create and edit a dedicated calendar for your Bible study plan.</li>
-              <li>Read events from your other calendars in order to intelligently schedule your study sessions without conflicts.</li>
+              <li>Read events from your other calendars to intelligently schedule study sessions without conflicts.</li>
             </ul>
             <p>
-              <strong>Important:</strong> We only create/edit one dedicated calendar. Reading other calendars is solely used to prevent scheduling conflicts and personalize your plan. We do not make any changes to your existing calendars or events.
+              <strong>Important:</strong> We only create or edit one dedicated calendar. Reading other calendars is solely used to prevent
+              scheduling conflicts and personalize your plan. We do not make any changes to your existing calendars or events.
             </p>
 
             <h3 className="mb-2 mt-4 text-primary">AI Data Processing (OpenAI)</h3>
             <p>
-              {websiteName} uses an AI assistant to generate a personalized Bible study plan based on your progress and preferences. 
+              {websiteName} uses an AI assistant to generate a personalized Bible study plan based on your progress and preferences.
               The AI receives:
             </p>
             <ul>
@@ -88,15 +92,17 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
               <li>Your study name, target end date, and scheduling preferences</li>
             </ul>
             <p>
-              The AI generates a structured study schedule and returns it to the app. 
-              We <strong>do not store this data outside of your session</strong> except for the study plan added to your dedicated calendar. 
+              The AI generates a structured study schedule and returns it to the app.
+              We <strong>do not store this data outside of your session</strong> except for the study plan added to your dedicated calendar.
               No other personal information is shared with OpenAI.
             </p>
           </div>
 
           {/* 3. Use of Data */}
           <div className="mb-5">
-            <h2 className="mb-3" style={subheadingStyle}>3. How We Use Your Data</h2>
+            <h2 className="mb-3" style={subheadingStyle}>
+              3. How We Use Your Data
+            </h2>
             <ul>
               <li>To create and maintain your personalized Bible study plan.</li>
               <li>To schedule study events without conflicting with your existing calendar events.</li>
@@ -107,17 +113,21 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
 
           {/* 4. Cookies and Tracking */}
           <div className="mb-5">
-            <h2 className="mb-3" style={subheadingStyle}>4. Cookies and Tracking</h2>
+            <h2 className="mb-3" style={subheadingStyle}>
+              4. Cookies and Tracking
+            </h2>
             <p>
-              We use cookies and similar technologies for website functionality and analytics. 
-              We use Vercel Analytics to monitor website performance; this data is aggregated and anonymized. 
+              We use cookies and similar technologies for website functionality and analytics.
+              We use Vercel Analytics to monitor website performance; this data is aggregated and anonymized.
               We also use Stripe for secure payment processing; payment details are handled by Stripe and not stored by us.
             </p>
           </div>
 
           {/* 5. Sharing Your Data */}
           <div className="mb-5">
-            <h2 className="mb-3" style={subheadingStyle}>5. Sharing Your Data</h2>
+            <h2 className="mb-3" style={subheadingStyle}>
+              5. Sharing Your Data
+            </h2>
             <p>
               We do not share your personal data, calendar events, or study plan data with third parties except:
             </p>
@@ -130,24 +140,69 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
 
           {/* 6. Data Security */}
           <div className="mb-5">
-            <h2 className="mb-3" style={subheadingStyle}>6. Data Security</h2>
+            <h2 className="mb-3" style={subheadingStyle}>
+              6. Data Security
+            </h2>
             <p>
-              We implement reasonable security measures to protect your data. However, no system is completely secure; we cannot guarantee absolute security.
+              We implement reasonable security measures to protect your data. However, no system is completely secure; we cannot
+              guarantee absolute security.
             </p>
           </div>
 
-          {/* 7. Contact */}
+          {/* 7. Your Rights */}
           <div className="mb-5">
-            <h2 className="mb-3" style={subheadingStyle}>7. Contact Us</h2>
+            <h2 className="mb-3" style={subheadingStyle}>
+              7. Your Rights
+            </h2>
             <p>
-              If you have questions about this Privacy Policy, please contact us:
+              You may request access, correction, or deletion of your personal data at any time by contacting us using the details below.
+              We will respond to all legitimate requests within a reasonable timeframe.
+            </p>
+          </div>
+
+          {/* 8. Data Retention and Deletion */}
+          <div className="mb-5">
+            <h2 className="mb-3" style={subheadingStyle}>
+              8. Data Retention and Deletion
+            </h2>
+            <p>
+              {websiteName} retains Google user data only for as long as necessary to provide and improve the Service. Specifically:
             </p>
             <ul>
-              <li>Email: <a href={`mailto:${contactEmail}`}>{contactEmail}</a></li>
-              <li>Contact page: <a href={contactPageUrl}>{contactPageUrl}</a></li>
+              <li>
+                Calendar data (including events created or read via Google Calendar) is retained only for the duration of your connected
+                session and for your active Bible study plan.
+              </li>
+              <li>
+                If you disconnect your Google account or delete your study plan, all associated Google Calendar data managed by {websiteName}
+                is permanently deleted from our systems within 24 hours.
+              </li>
+              <li>
+                No Google user data is stored beyond what is required to maintain the functionality you request.
+              </li>
             </ul>
+            <p>
+              You may request deletion of any personal or calendar data at any time by emailing{" "}
+              <a href={`mailto:${contactEmail}`}>{contactEmail}</a>. Once verified, we will permanently delete your data from our systems
+              and confirm completion of the request.
+            </p>
           </div>
 
+          {/* 9. Contact */}
+          <div className="mb-5">
+            <h2 className="mb-3" style={subheadingStyle}>
+              9. Contact Us
+            </h2>
+            <p>If you have questions about this Privacy Policy, please contact us:</p>
+            <ul>
+              <li>
+                Email: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+              </li>
+              <li>
+                Contact page: <a href={contactPageUrl}>{contactPageUrl}</a>
+              </li>
+            </ul>
+          </div>
         </div>
       </section>
     </div>
