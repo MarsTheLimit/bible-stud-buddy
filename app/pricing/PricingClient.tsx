@@ -2,6 +2,7 @@
 import { useUserAccount } from "@/lib/hooks/useUserAccount";
 import { redirectToSubscription, cancelSubscription } from "@/lib/stripeApi";
 import React from "react";
+import { Spinner } from "react-bootstrap";
 
 const CancellationModal = ({ isVisible, onClose }: {isVisible: boolean, onClose: () => void}) => {
     if (!isVisible) return null;
@@ -97,8 +98,6 @@ export default function PricingClient() {
     const proButtonStyle = isPro ? "btn-outline-secondary" : "btn-success";
     const proButtonDisabled = isPro;
 
-    const mostPopular = isPro ? 'pro' : hasActiveTrial ? 'trial' : 'pro';
-
     async function handlePlanAction(plan: string) {
         if (!user || !accountData) return;
         
@@ -159,7 +158,6 @@ export default function PricingClient() {
             buttonText: freeTrialButtonText,
             buttonStyle: freeTrialButtonStyle,
             buttonDisabled: freeTrialButtonDisabled,
-            popular: mostPopular === 'trial',
             planType: 'trial'
         },
         {
@@ -177,12 +175,11 @@ export default function PricingClient() {
             buttonText: proButtonText,
             buttonStyle: proButtonStyle,
             buttonDisabled: proButtonDisabled,
-            popular: mostPopular === 'pro',
             planType: 'pro'
         },
     ];
 
-    if (loading) return <div className="container py-5 text-center"><h2>Loading...</h2></div>;
+    if (loading) return <div className="container py-5 text-center"><h2>Loading...</h2><Spinner/></div>;
 
     return (
         <div className="container py-5">
@@ -205,13 +202,6 @@ export default function PricingClient() {
                                 transition: 'transform 0.3s ease'
                             }}
                         >
-                            {plan.popular && (
-                                <div className="position-absolute top-0 start-50 translate-middle">
-                                    <span className="badge bg-primary px-3 py-2 rounded-pill">
-                                        Most Popular
-                                    </span>
-                                </div>
-                            )}
                             <div className="card-body d-flex flex-column p-4">
                                 <div className="text-center mb-4">
                                     <h2 className="h3 fw-bold mb-2">{plan.name}</h2>
