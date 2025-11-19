@@ -133,6 +133,10 @@ export default function CreateStudyPlan({
             // Refresh user account data
             await refresh();
 
+            if (onPlannerCreated) {
+                await onPlannerCreated();
+            }
+
             // Reset form and show success
             setTitle('');
             setStudyArea('');
