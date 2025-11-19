@@ -311,7 +311,6 @@ export default function DashboardClient() {
                                     const oneMonthFromNow = new Date();
                                     oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
                                     setEvents(await loadEvents(supabase, true, user, groupIds, oneMonthFromNow));
-                                    console.log("Returning: ", events);
                                     return events;
                                   }}
                                   tokensLeft={(accountData?.tokens_left ?? 0)}

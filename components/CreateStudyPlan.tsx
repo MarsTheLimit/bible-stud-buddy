@@ -30,67 +30,62 @@ export default function CreateStudyPlan({ schedulePrefs, onSubmit, tokensLeft }:
     if (schedulePrefs === undefined) return;
     
     const handleCreateStudyPlan = async (event: { preventDefault: () => void; }) => {
-        // Prevents the default browser form submission, which would cause a page reload
-        event.preventDefault();
+    event.preventDefault();
+    setLoading(true);
 
-        setLoading(true);
+    const currentDate = new Date();
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    const futureDateTimeISO = currentDate.toISOString();
 
-        const currentDate = new Date();
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        const futureDateTimeISO = currentDate.toISOString();
-    
-        const studyPlanData = {
-            name: title,
-            userPrefs: schedulePrefs,
-            studyArea: studyArea,
-            dateEnds: futureDateTimeISO,
-            userEvents: await onSubmit()
-        };
-    
-        const apiRoute = '/api/calendar/schedule';
+    const studyPlanData = {
+        name: title,
+        userPrefs: schedulePrefs,
+        studyArea: studyArea,
+        dateEnds: futureDateTimeISO,
+        userEvents: await onSubmit()
+    };
 
-        console.log('Sending data to API:', studyPlanData);
+    const apiRoute = '/api/calendar/schedule';
 
-        if (tokensLeft >= 2000) {
-            try {
-                if (!user) return;
-                const response = await fetch(apiRoute, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(studyPlanData),
-                });
+    console.log('Sending data to API:', studyPlanData);
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error(`API Error (${response.status}):`, errorData.error || response.statusText);
-                    // Throw an error or return null to handle failure in the UI
-                    throw new Error(errorData.error || 'Failed to generate schedule.');
-                }
+    if (tokensLeft >= 2000) {
+        try {
+            if (!user) return;
+            const response = await fetch(apiRoute, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(studyPlanData),
+            });
 
-                // Parse the successful JSON response
-                const data: ScheduleResponse = await response.json();
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error(`API Error (${response.status}):`, errorData.error || response.statusText);
+                throw new Error(errorData.error || 'Failed to generate schedule.');
+            }
 
-                console.log('Schedule generated successfully!', data.scheduleEvents);
-                console.log('Tokens used: ', data.usage);
+            const data: ScheduleResponse = await response.json();
 
-                const newTokenCount = tokensLeft - data.usage;
-                await updateUserTokens(user.id, newTokenCount);
-                console.log(`Updated user tokens: ${newTokenCount}`);
+            console.log('Schedule generated successfully!', data.scheduleEvents);
+            console.log('Tokens used: ', data.usage);
 
-                const currentYear = new Date().getFullYear();
+            const newTokenCount = tokensLeft - data.usage;
+            await updateUserTokens(user.id, newTokenCount);
+            console.log(`Updated user tokens: ${newTokenCount}`);
 
-                let sessionLength: number;
+            const currentYear = new Date().getFullYear();
 
-                if (schedulePrefs.study_session_length === null) {
-                    sessionLength = 15
-                } else {
-                    sessionLength = schedulePrefs.study_session_length;
-                }
+            let sessionLength: number;
 
-                // Fix the year on returned events
-                const fixedEvents = data.scheduleEvents.map(event => {
+            if (schedulePrefs.study_session_length === null) {
+                sessionLength = 15
+            } else {
+                sessionLength = schedulePrefs.study_session_length;
+            }
+
+            const fixedEvents = data.scheduleEvents.map(event => {
                 const startDate = new Date(event.start);
                 const endDate = new Date(startDate.getTime() + sessionLength * 60000);
 
@@ -102,24 +97,29 @@ export default function CreateStudyPlan({ schedulePrefs, onSubmit, tokensLeft }:
                     start: startDate.toISOString(),
                     end: endDate.toISOString(),
                 };
-                });
+            });
 
-                // Save fixed events
-                const newPlanner = await createPlanner(user.id, title);
-                await addEventsToPlanner(user.id, newPlanner.id, fixedEvents);
+            // Save fixed events
+            const newPlanner = await createPlanner(user.id, title);
+            await addEventsToPlanner(user.id, newPlanner.id, fixedEvents);
+            await refresh();
 
-                await refresh();
+            // Reset form only after everything succeeds
+            setTitle('');
+            setStudyArea('');
 
-            } catch (error) {
-                console.error('Submission failed:', error);
-                return null;
-            } finally {
-                setTitle('');
-                setStudyArea('');
-                setLoading(false);
-            }
+        } catch (error) {
+            console.error('Submission failed:', error);
+            // Consider showing an error message to the user here
+        } finally {
+            // This now runs after ALL async operations complete
+            setLoading(false);
         }
-    };
+    } else {
+        // Handle insufficient tokens case
+        setLoading(false);
+    }
+};
 
     return (
         <div>
