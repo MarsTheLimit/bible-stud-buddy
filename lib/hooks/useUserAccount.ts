@@ -4,6 +4,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { UserScheduleData } from "@/components/PreferencesPopup";
 
 export type UserAccount = {
+  email: string | null;
+  display_name: string | null;
   account_type: 'free' | 'pro';
   trial_ends_at: string | null;
   trial_used: boolean;
@@ -16,7 +18,7 @@ export type UserAccount = {
   tokens_left: number;
 };
 
-const DATA_SELECTION = 'account_type, trial_ends_at, trial_used, stripe_subscription_id, stripe_customer_id, google_access_token, google_refresh_token, schedule_prefs, planners, tokens_left'
+const DATA_SELECTION = 'email, display_name, account_type, trial_ends_at, trial_used, stripe_subscription_id, stripe_customer_id, google_access_token, google_refresh_token, schedule_prefs, planners, tokens_left'
 
 // Also update the Partial type to include the new fields
 type UserAccountUpdates = Partial<UserAccount & { id?: string }>;

@@ -33,14 +33,17 @@ export default function Navbar() {
         </button>
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <Link className="nav-link" href="/">Home</Link>
-            </li>
+            </li> */}
             {user && (
               <>
                 <li className="nav-item">
                   <Link className="nav-link" href="/dashboard">Dashboard</Link>
                 </li>
+                {/* <li className="nav-item">
+                  <Link className="nav-link" href={`/profile/${user.id}`}>Profile</Link>
+                </li> */}
                 <li className="nav-item">
                   <Link className="nav-link" href="/groups">Groups</Link>
                 </li>

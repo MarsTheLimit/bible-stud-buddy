@@ -8,7 +8,7 @@ export default function AuthForm() {
   const [message, setMessage] = useState("");
 
   const handleSignUp = async () => {
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -17,7 +17,7 @@ export default function AuthForm() {
   };
 
   const handleSignIn = async () => {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
