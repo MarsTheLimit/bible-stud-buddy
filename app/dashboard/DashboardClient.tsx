@@ -301,27 +301,31 @@ export default function DashboardClient() {
                                 }
                               }}
                             />
-                          ) : (
-                            <div>
-                              {((planners?.length ?? 0) === 0) ? (
-                                <CreateStudyPlan
-                                  schedulePrefs={schedulePrefs}
-                                  userEvents={events}
-                                  onSubmit={async () => {
-                                    const oneMonthFromNow = new Date();
-                                    oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-                                    setEvents(await loadEvents(supabase, true, user, groupIds, oneMonthFromNow));
-                                    return events;
-                                  }}
-                                  tokensLeft={(accountData?.tokens_left ?? 0)}
-                                />
-                              ) : (
-                                <PlannerViewer userId={user?.id} />
-                              )}
-                            </div>
-                          )}
-                        </>
-                      )}
+                            ) : (
+                              <div>
+                                {((planners?.length ?? 0) === 0) ? (
+                                  <CreateStudyPlan
+                                    schedulePrefs={schedulePrefs}
+                                    userEvents={events}
+                                    onSubmit={async () => {
+                                      const oneMonthFromNow = new Date();
+                                      oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+                                      setEvents(await loadEvents(supabase, true, user, groupIds, oneMonthFromNow));
+                                      return events;
+                                    }}
+                                    tokensLeft={(accountData?.tokens_left ?? 0)}
+                                    onPlannerCreated={refresh}
+                                  />
+                                ) : (
+                                  <PlannerViewer
+                                    userId={user?.id}
+                                    onPlannerDeleted={refresh}
+                                    />
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
                     </>
                   )}
                 </div>

@@ -7,11 +7,9 @@ type Planner = {
   name: string;
 };
 
-export default function PlannerViewer({ userId }: { userId: string | undefined }) {
+export default function PlannerViewer({ userId, onPlannerDeleted }: { userId: string | undefined; onPlannerDeleted: () => void }) {
   const [planners, setPlanners] = useState<Planner[]>([]);
   const [loading, setLoading] = useState(true);
-
-  
 
   async function handleDeletePlanner(plannerId: string) {
     try {
@@ -22,8 +20,10 @@ export default function PlannerViewer({ userId }: { userId: string | undefined }
       // Optimistically remove the planner from state
       setPlanners((prev) => prev.filter((p) => p.id !== plannerId));
 
-      // Optionally, refetch from Supabase to make sure state is consistent
-      // await fetchPlanners();
+      if (onPlannerDeleted) {
+        await onPlannerDeleted();
+      }
+      
     } catch (err) {
       console.error("Failed to delete planner:", err);
       alert("Could not delete planner. Try again.");
@@ -53,7 +53,6 @@ export default function PlannerViewer({ userId }: { userId: string | undefined }
 
   if (loading) return <p>Loading planners...</p>;
   if (!loading && planners.length === 0)
-    
     return <p>No planners found. Create one to get started!</p>;
 
   return (
