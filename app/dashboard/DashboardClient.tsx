@@ -38,6 +38,7 @@ export default function DashboardClient() {
     planners,
     refresh
   } = useUserAccount();
+  const size = useWindowSize();
   const router = useRouter();
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [groupIds, setGroupIds] = useState<string[]>([]);
@@ -152,209 +153,238 @@ export default function DashboardClient() {
     setCalendarKey(prev => prev + 1);
   };
 
+  if (!size) return <p>ERROR ERROR ABORT ABORT</p>
+
   return (
-    <div className="container px-5 my-5">
-      <header className="text-center mb-5">
+    <div className={`container ${(size?.width > 900) ? ("px-5") : ("px-0")} my-5`}>
+      <header className={"text-center mb-5"}>
         <h1 className="display-5 fw-bolder mb-0">
           <span className="text-gradient d-inline">Dashboard</span>
         </h1>
       </header>
 
       <div className="row">
-  {/* Main Content - Full width on mobile, 8 columns on large screens */}
-  <div className="col-12 col-lg-8 mb-4">
-    <div className="card overflow-hidden shadow rounded-4 border-0">
-      <div className="card-body">
-        {/* Tab Navigation */}
-        <ul className="nav nav-tabs mb-4" role="tablist">
-          <li className="nav-item" role="presentation">
-            <button
-              className={`nav-link ${activeTab === 'alerts' ? 'active' : ''}`}
-              onClick={() => setActiveTab('alerts')}
-              type="button"
-              role="tab"
-            >
-              Notifications
-            </button>
-          </li>
-          <li className="nav-item" role="presentation">
-            <button
-              className={`nav-link ${activeTab === 'calendar' ? 'active' : ''}`}
-              onClick={() => setActiveTab('calendar')}
-              type="button"
-              role="tab"
-            >
-              Calendar
-            </button>
-          </li>
-          <li className="nav-item" role="presentation">
-            <button
-              className={`nav-link d-flex ${activeTab === 'chat' ? 'active' : ''} ${!hasProAccess ? 'text-muted' : ''}`}
-              onClick={() => setActiveTab('chat')}
-              type="button"
-              role="tab"
-              disabled={!hasProAccess && !isLoading}
-            >
-              AI Planner{!hasProAccess && !isLoading && (
-                <div className="m-1 my-0"><ProPill accessLevel="pro" hasActiveTrial={false} /></div>
-              )}
-            </button>
-          </li>
-          {/* Groups tab only visible on small screens */}
-          <li className="nav-item d-lg-none" role="presentation">
-            <button
-              className={`nav-link ${activeTab === 'groups' ? 'active' : ''}`}
-              onClick={() => setActiveTab('groups')}
-              type="button"
-              role="tab"
-            >
-              Groups
-            </button>
-          </li>
-        </ul>
-
-        <div className="tab-content">
-          {/* Alerts Section */}
-          <div 
-            className={activeTab === 'alerts' ? '' : 'd-none'}
-            role="tabpanel"
-          >
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h2>Notifications</h2>
-            </div>
-            {isLoading ? (
-              <LoadingSpinner text="Loading notifications..." />
-            ) : (
-              <NotificationViewer groupIds={groupIds} />
-            )}
-          </div>
-
-          {/* Personal Calendar Section */}
-          <div 
-            className={activeTab === 'calendar' ? '' : 'd-none'}
-            role="tabpanel"
-          >
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h2>Personal Calendar</h2>
-            </div>
-            {isLoading ? (
-              <LoadingSpinner text="Loading calendar..." />
-            ) : (
-              <EventsCalendar
-                key={calendarKey}
-                isCreator={true}
-                isPersonal={true}
-                groupIds={groupIds}
-                onEventAdded={handleCalendarRefresh}
-              />
-            )}
-          </div>
-
-          {/* AI Chat Section */}
-          <div className={activeTab === 'chat' ? '' : 'd-none'} role="tabpanel">
-            {isLoading ? (
-              <LoadingSpinner text="Loading AI planner..." />
-            ) : (
-              <>
-                {calendarUsed.includes("google") ? (
-                  <p>(Using Google Calendar)</p>
-                ) : (
-                  <div className="alert alert-warning">
-                    <strong>No Calendar Connected</strong>
-                  </div>
-                )}
-                
-                {schedulePrefs && (
-                  <PreferencesPopup onEdit={handleUpdateUserPreferences}/>
-                )}
-
-                {!calendarUsed.includes("google") ? (
-                  <>
-                    <Button onClick={connectGoogle} className="mb-3">
-                      Connect Google Calendar
-                    </Button>
-                    <p className="text-muted small">
-                      By clicking this button, you allow this app to view your Google Calendar 
-                      events to display your schedule. If you create a Bible study plan with AI, 
-                      your data is used only to personalize your plan and is never shared with 
-                      third parties. Privacy Policy.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    {((accountData?.tokens_left ?? 0) >= 2000) ? (
-                      <p>You can make about {Math.ceil((accountData?.tokens_left ?? 0) / 5000)} new planners this month</p>
-                    ) : (
-                      <p>You can&apos;t make any new planners this month</p>
+        {/* Main Content - Takes up 8 columns on large screens, full width on small */}
+        <div className="col-lg-8 mb-4">
+          <div className={`${(size?.width > 900) && ("card overflow-hidden shadow rounded-4 border-0")}`}>
+            <div className={`${(size?.width > 900) && ("card-body")}`}>
+              {/* Tab Navigation */}
+              <ul className="nav nav-tabs mb-4" role="tablist">
+                <li className="nav-item" role="presentation">
+                  <button
+                    className={`nav-link ${activeTab === 'alerts' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('alerts')}
+                    type="button"
+                    role="tab"
+                  >
+                    Notifications
+                  </button>
+                </li>
+                <li className="nav-item" role="presentation">
+                  <button
+                    className={`nav-link ${activeTab === 'calendar' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('calendar')}
+                    type="button"
+                    role="tab"
+                  >
+                    Calendar
+                  </button>
+                </li>
+                <li className="nav-item" role="presentation">
+                  <button
+                    className={`nav-link d-flex ${activeTab === 'chat' ? 'active' : ''} ${!hasProAccess ? 'text-muted' : ''}`}
+                    onClick={() => setActiveTab('chat')}
+                    type="button"
+                    role="tab"
+                    disabled={!hasProAccess && !isLoading}
+                  >
+                    AI Planner{ !hasProAccess && !isLoading && (
+                      <div className="m-1 my-0"><ProPill accessLevel="pro" hasActiveTrial={false} /></div>
+                      
                     )}
-                    
-                    {(schedulePrefs === null) ? (
-                      <PreferencesInput
-                        onSubmit={async (prefs) => {
-                          try {
-                            await updateAccount({ schedule_prefs: prefs });
-                            console.log("Preferences saved to Supabase:", prefs);
-                          } catch (err) {
-                            console.error("Failed to update preferences:", err);
-                          }
-                        }}
-                      />
-                    ) : (
-                      <div>
-                        {((planners?.length ?? 0) === 0) ? (
-                          <CreateStudyPlan
-                            schedulePrefs={schedulePrefs}
-                            userEvents={events}
-                            onSubmit={async () => {
-                              const oneMonthFromNow = new Date();
-                              oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-                              setEvents(await loadEvents(supabase, true, user, groupIds, oneMonthFromNow));
-                              return events;
-                            }}
-                            tokensLeft={(accountData?.tokens_left ?? 0)}
-                            onPlannerCreated={refresh}
-                          />
-                        ) : (
-                          <PlannerViewer
-                            userId={user?.id}
-                            onPlannerDeleted={refresh}
-                          />
+                  </button>
+                </li>
+                {/* Groups tab only visible on small screens */}
+                <li className="nav-item d-lg-none" role="presentation">
+                  <button
+                    className={`nav-link ${activeTab === 'groups' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('groups')}
+                    type="button"
+                    role="tab"
+                  >
+                    Groups
+                  </button>
+                </li>
+              </ul>
+
+              <div className="tab-content">
+                {/* Alerts Section */}
+                <div 
+                  className={activeTab === 'alerts' ? '' : 'd-none'}
+                  role="tabpanel"
+                >
+                  {isLoading ? (
+                    <LoadingSpinner text="Loading notifications..." />
+                  ) : (
+                    <NotificationViewer groupIds={groupIds} />
+                  )}
+                </div>
+
+                {/* Personal Calendar Section */}
+                <div 
+                  className={activeTab === 'calendar' ? '' : 'd-none'}
+                  role="tabpanel"
+                >
+                  {isLoading ? (
+                    <LoadingSpinner text="Loading calendar..." />
+                  ) : (
+                    <EventsCalendar
+                      key={calendarKey}
+                      isCreator={true}
+                      isPersonal={true}
+                      groupIds={groupIds}
+                      onEventAdded={handleCalendarRefresh}
+                    />
+                  )}
+                </div>
+
+                {/* AI Chat Section */}
+                <div className={activeTab === 'chat' ? '' : 'd-none'} role="tabpanel">
+                  {isLoading ? (
+                    <LoadingSpinner text="Loading AI planner..." />
+                  ) : (
+                    <>
+                      {calendarUsed.includes("google") ? (
+                        <p>(Using Google Calendar)</p>
+                      ) : (
+                        <div className="alert alert-warning">
+                          <strong>No Calendar Connected</strong>
+                        </div>
+                      )}
+                      
+                      {schedulePrefs && (
+                        <PreferencesPopup onEdit={handleUpdateUserPreferences}/>
+                      )}
+
+                      {!calendarUsed.includes("google") ? (
+                        <>
+                          <Button onClick={connectGoogle} className="mb-3">
+                            Connect Google Calendar
+                          </Button>
+                          <p className="text-muted small">
+                            By clicking this button, you allow this app to view your Google Calendar 
+                            events to display your schedule. If you create a Bible study plan with AI, 
+                            your data is used only to personalize your plan and is never shared with 
+                            third parties. Privacy Policy.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          {((accountData?.tokens_left ?? 0) >= 2000) ? (
+                            <p>You can make about {Math.ceil((accountData?.tokens_left ?? 0) / 5000)} new planners this month</p>
+                          ) : (
+                            <p>You can&apos;t make any new planners this month</p>
+                          )}
+                          
+                          {(schedulePrefs === null) ? (
+                            <PreferencesInput
+                              onSubmit={async (prefs) => {
+                                try {
+                                  await updateAccount({ schedule_prefs: prefs });
+                                  console.log("Preferences saved to Supabase:", prefs);
+                                } catch (err) {
+                                  console.error("Failed to update preferences:", err);
+                                }
+                              }}
+                            />
+                            ) : (
+                              <div>
+                                {((planners?.length ?? 0) === 0) ? (
+                                  <CreateStudyPlan
+                                    schedulePrefs={schedulePrefs}
+                                    userEvents={events}
+                                    onSubmit={async () => {
+                                      const oneMonthFromNow = new Date();
+                                      oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+                                      setEvents(await loadEvents(supabase, true, user, groupIds, oneMonthFromNow));
+                                      return events;
+                                    }}
+                                    tokensLeft={(accountData?.tokens_left ?? 0)}
+                                    onPlannerCreated={refresh}
+                                  />
+                                ) : (
+                                  <PlannerViewer
+                                    userId={user?.id}
+                                    onPlannerDeleted={refresh}
+                                    />
+                                )}
+                              </div>
+                            )}
+                          </>
                         )}
-                      </div>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </div>
+                    </>
+                  )}
+                </div>
 
-          {/* Groups Section - Only shows as tab on small screens */}
-          <div 
-            className={activeTab === 'groups' ? 'd-lg-none' : 'd-none'}
-            role="tabpanel"
-          >
-            <h2>Your Groups</h2>
-            <GroupsContent />
+                {/* Groups Section - Only shows as tab on small screens */}
+                <div 
+                  className={activeTab === 'groups' ? 'd-lg-none' : 'd-none'}
+                  role="tabpanel"
+                >
+                  <h2>Your Groups</h2>
+                  <GroupsContent />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  {/* Groups Sidebar - Only visible on large screens */}
-  <aside className="col-12 col-lg-4 mb-4 d-none d-lg-block">
-    <div className="card overflow-hidden shadow rounded-4 border-0 sticky-top" style={{ top: '20px' }}>
-      <div className="card-header">
-        <h2 className="h3 mb-0">Your Groups</h2>
+        {/* Groups Sidebar - Only visible on large screens */}
+        <aside className="col-lg-4 mb-4 d-none d-lg-block">
+          <div className="card overflow-hidden shadow rounded-4 border-0 sticky-top" style={{ top: '20px' }}>
+            <div className="card-header">
+              <h2 className="h3 mb-0">Your Groups</h2>
+            </div>
+            <div className="card-body p-0">
+              <GroupsContent />
+            </div>
+          </div>
+        </aside>
       </div>
-      <div className="card-body p-0">
-        <GroupsContent />
-      </div>
-    </div>
-  </aside>
-</div>
     </div>
   );
+}
+
+type WindowSize = {
+  width: number;
+  height: number;
+} | undefined;
+
+function useWindowSize() {
+  // Initialize state with undefined width/height so server and client renders match
+  const [windowSize, setWindowSize] = useState<WindowSize>(undefined);
+
+  useEffect(() => {
+    // only execute all the code below in client side
+    // Handler to call on window resize
+    function handleResize() {
+      // Set window width/height to state
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }
+    
+    // Add event listener
+    window.addEventListener("resize", handleResize);
+     
+    // Call handler right away so state gets updated with initial window size
+    handleResize();
+    
+    // Remove event listener on cleanup
+    return () => window.removeEventListener("resize", handleResize);
+  }, []); // Empty array ensures that effect is only run on mount
+  return windowSize;
 }
 
 function PreferencesInput({
