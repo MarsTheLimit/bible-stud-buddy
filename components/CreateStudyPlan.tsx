@@ -225,7 +225,7 @@ export default function CreateStudyPlan({
                         borderRadius: '4px',
                         color: '#856404'
                     }}>
-                        ⚠️ You have {tokensLeft} tokens remaining. You need at least 2000 tokens to create a study plan.
+                        You have {tokensLeft} tokens remaining. You need at least 2000 tokens to create a study plan. Your tokens will reset at the end of the month.
                     </div>
                 )}
 
