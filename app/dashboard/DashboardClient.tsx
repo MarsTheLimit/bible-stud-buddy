@@ -12,7 +12,7 @@ import EventsCalendar from "@/components/EventsCalendar";
 import ProPill from "@/components/ProPill";
 import { supabase } from "@/lib/supabaseClient";
 import { Form, Row, Col, Button, Spinner } from "react-bootstrap";
-import { PreferencesPopup } from "@/components/PreferencesPopup";
+import { PreferencesPopup, UserScheduleData } from "@/components/PreferencesPopup";
 import CreateStudyPlan from "@/components/CreateStudyPlan";
 import PlannerViewer from "@/components/PlannerViewer";
 
@@ -23,16 +23,6 @@ interface UserGroup {
   isCreator: boolean;
   join_code: string;
   user_count: number;
-}
-
-interface Preferences {
-  morning_person: boolean;
-  busyness: string;
-  least_busy_days: string[] | null;
-  school_work: { type: string; hours: string } | null;
-  earliest_awake: string | null;
-  latest_asleep: string | null;
-  other_info: string | null;
 }
 
 export default function DashboardClient() {
@@ -206,7 +196,7 @@ export default function DashboardClient() {
                     disabled={!hasProAccess && !isLoading}
                   >
                     AI Planner{ !hasProAccess && !isLoading && (
-                      <a href="/pricing"><div className="m-1 my-0"><ProPill accessLevel="pro" hasActiveTrial={false} /></div></a>
+                      <div className="m-1 my-0"><ProPill accessLevel="pro" hasActiveTrial={false} /></div>
                       
                     )}
                   </button>
@@ -224,119 +214,127 @@ export default function DashboardClient() {
                 </li>
               </ul>
 
-              {/* Tab Content */}
+              {/* Tab Content - All tabs render but inactive ones are hidden */}
               <div className="tab-content">
                 {/* Alerts Section */}
-                {activeTab === 'alerts' && (
-                  <section className="tab-pane fade show active">
-                    <h4>Notifications</h4>
-                    {isLoading ? (
-                      <LoadingSpinner text="Loading notifications..." />
-                    ) : (
-                      <NotificationViewer groupIds={groupIds}/>
-                    )}
-                  </section>
-                )}
+                <div 
+                  className={activeTab === 'alerts' ? '' : 'd-none'}
+                  role="tabpanel"
+                >
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h2>Notifications</h2>
+                  </div>
+                  {isLoading ? (
+                    <LoadingSpinner text="Loading notifications..." />
+                  ) : (
+                    <NotificationViewer groupIds={groupIds} />
+                  )}
+                </div>
 
                 {/* Personal Calendar Section */}
-                {activeTab === 'calendar' && (
-                  <section className="tab-pane fade show active">
-                    <h4>Personal Calendar</h4>
-                    {isLoading ? (
-                      <LoadingSpinner text="Loading calendar..." />
-                    ) : (
-                      <EventsCalendar 
-                        key={calendarKey}
-                        groupIds={groupIds} 
-                        isCreator={false} 
-                        isPersonal={true}
-                        onEventAdded={handleCalendarRefresh}
-                      />
-                    )}
-                  </section>
-                )}
+                <div 
+                  className={activeTab === 'calendar' ? '' : 'd-none'}
+                  role="tabpanel"
+                >
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h2>Personal Calendar</h2>
+                  </div>
+                  {isLoading ? (
+                    <LoadingSpinner text="Loading calendar..." />
+                  ) : (
+                    <EventsCalendar
+                      key={calendarKey}
+                      isCreator={true}
+                      isPersonal={true}
+                      groupIds={groupIds}
+                      onEventAdded={handleCalendarRefresh}
+                    />
+                  )}
+                </div>
 
                 {/* AI Chat Section */}
-                {activeTab === 'chat' && (
-                  <section className="tab-pane fade show active">
-                    <div className="" style={{minHeight: '50vh'}}>
-                      {isLoading ? (
-                        <LoadingSpinner text="Loading AI Planner..." />
+                <div className={activeTab === 'chat' ? '' : 'd-none'} role="tabpanel">
+                  {isLoading ? (
+                    <LoadingSpinner text="Loading AI planner..." />
+                  ) : (
+                    <>
+                      {calendarUsed.includes("google") ? (
+                        <p>(Using Google Calendar)</p>
+                      ) : (
+                        <div className="alert alert-warning">
+                          <strong>No Calendar Connected</strong>
+                        </div>
+                      )}
+                      
+                      {schedulePrefs && (
+                        <PreferencesPopup onEdit={handleUpdateUserPreferences}/>
+                      )}
+
+                      {!calendarUsed.includes("google") ? (
+                        <>
+                          <Button onClick={connectGoogle} className="mb-3">
+                            Connect Google Calendar
+                          </Button>
+                          <p className="text-muted small">
+                            By clicking this button, you allow this app to view your Google Calendar 
+                            events to display your schedule. If you create a Bible study plan with AI, 
+                            your data is used only to personalize your plan and is never shared with 
+                            third parties. Privacy Policy.
+                          </p>
+                        </>
                       ) : (
                         <>
-                          <span className="d-flex">
-                            { calendarUsed.includes("google") ? (
-                              <span className="fw-light fs-5 text-secondary">(Using Google Calendar)</span>
-                            ) : (
-                              <h2 className="fs-5 text-secondary">No Calendar Connected</h2>
-                            )}
-                            { schedulePrefs && (<PreferencesPopup onEdit={handleUpdateUserPreferences}/>) }
-                          </span>
-                          { !calendarUsed.includes("google") ? (
-                            <>
-                              <div className="d-flex align-items-center justify-content-center text-center my-xl-5">
-                                <button className="btn btn-primary my-xl-5" onClick={connectGoogle}>Connect Google Calendar</button>
-                              </div>
-                              <p className="mt-auto text-muted small">
-                                By clicking this button, you allow this app to view your Google Calendar events to display your schedule. 
-                                If you create a Bible study plan with AI, your data is used only to personalize your plan and is never shared with third parties. 
-                                <a href="/privacy-policy" rel="noopener noreferrer" className="text-primary underline">
-                                  Privacy Policy
-                                </a>.
-                              </p>
-                            </>
+                          {((accountData?.tokens_left ?? 0) >= 2000) ? (
+                            <p>You can make about {Math.ceil((accountData?.tokens_left ?? 0) / 5000)} new planners this month</p>
                           ) : (
-                            <>
-                              {((accountData?.tokens_left ?? 0) >= 2000) ? (<span>You can make about {Math.ceil((accountData?.tokens_left ?? 0) / 5000)} new planners this month</span>):
-                              (
-                                <span>You can&apos;t make any new planners this month</span>
-                              )}
-                              { (schedulePrefs === null) ? (
-                                <PreferencesInput onSubmit={async (prefs) => {
-                                  try {
-                                    await updateAccount({ schedule_prefs: prefs });
-                                    console.log("Preferences saved to Supabase:", prefs);
-                                  } catch (err) {
-                                    console.error("Failed to update preferences:", err);
-                                  }
-                                }} />
+                            <p>You can&apos;t make any new planners this month</p>
+                          )}
+                          
+                          {(schedulePrefs === null) ? (
+                            <PreferencesInput
+                              onSubmit={async (prefs) => {
+                                try {
+                                  await updateAccount({ schedule_prefs: prefs });
+                                  console.log("Preferences saved to Supabase:", prefs);
+                                } catch (err) {
+                                  console.error("Failed to update preferences:", err);
+                                }
+                              }}
+                            />
+                          ) : (
+                            <div>
+                              {((planners?.length ?? 0) === 0) ? (
+                                <CreateStudyPlan
+                                  schedulePrefs={schedulePrefs}
+                                  userEvents={events}
+                                  onSubmit={async () => {
+                                    const oneMonthFromNow = new Date();
+                                    oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+                                    setEvents(await loadEvents(supabase, true, user, groupIds, oneMonthFromNow));
+                                    console.log("Returning: ", events);
+                                    return events;
+                                  }}
+                                  tokensLeft={(accountData?.tokens_left ?? 0)}
+                                />
                               ) : (
-                                <div className="m-2 p-1">
-                                  {((planners?.length ?? 0) === 0) ? (
-                                    <CreateStudyPlan
-                                      schedulePrefs={schedulePrefs}
-                                      userEvents={events}
-                                      onSubmit={async () => {
-                                        const oneMonthFromNow = new Date();
-                                        oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-                                        setEvents(await loadEvents(supabase, true, user, groupIds, oneMonthFromNow));
-                                        console.log("Returning: ", events);
-                                        return events;
-                                      }}
-                                      tokensLeft={(accountData?.tokens_left ?? 0)}
-                                    />
-                                  ) : (
-                                    <PlannerViewer
-                                      userId={user?.id}
-                                    />
-                                  )}
-                                </div>
+                                <PlannerViewer userId={user?.id} />
                               )}
-                            </>
+                            </div>
                           )}
                         </>
                       )}
-                    </div>
-                  </section>
-                )}
+                    </>
+                  )}
+                </div>
 
                 {/* Groups Section - Only shows as tab on small screens */}
-                {activeTab === 'groups' && (
-                  <section className="tab-pane fade show active d-lg-none">
-                    <h4>Your Groups</h4>
-                    <GroupsContent />
-                  </section>
-                )}
+                <div 
+                  className={activeTab === 'groups' ? 'd-lg-none' : 'd-none'}
+                  role="tabpanel"
+                >
+                  <h2>Your Groups</h2>
+                  <GroupsContent />
+                </div>
               </div>
             </div>
           </div>
@@ -361,19 +359,20 @@ export default function DashboardClient() {
 function PreferencesInput({
   onSubmit,
 }: {
-  onSubmit: (prefs: Preferences) => void;
+  onSubmit: (prefs: UserScheduleData) => void;
 }) {
-  const [prefs, setPrefs] = useState<Preferences>({
+  const [prefs, setPrefs] = useState<UserScheduleData>({
     morning_person: false,
     busyness: "",
     least_busy_days: [], 
-    school_work: { type: "", hours: "" },
+    // school_work: { type: "", hours: "" },
     earliest_awake: null,
     latest_asleep: null,
     other_info: null,
+    study_session_length: null
   });
 
-  const handleChange = (field: keyof Preferences, value: unknown) => {
+  const handleChange = (field: keyof UserScheduleData, value: unknown) => {
     const updated = { ...prefs, [field]: value };
     setPrefs(updated);
   };
@@ -412,6 +411,22 @@ function PreferencesInput({
           <option value="open schedule">Open schedule</option>
         </Form.Select>
       </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>How long would you like your study sessions to be (minutes)?</Form.Label>
+        <Row>
+          <Col>
+            <Form.Control
+              type="number"
+              placeholder="Ends"
+              value={prefs.study_session_length || 15}
+              onChange={(e) =>
+                handleChange("study_session_length", e.target.value)
+              }
+              required
+            />
+          </Col>
+        </Row>
+      </Form.Group>
 
       {/* Least Busy Days (Checkboxes) */}
       <Form.Group className="mb-3">
@@ -447,37 +462,24 @@ function PreferencesInput({
       </Form.Group>
 
       {/* School/Work Info */}
-      <Form.Group className="mb-3">
-        <Form.Label>School or Work</Form.Label>
+      {/* <Form.Group className="mb-3">
+        <Form.Label>When does your School, Work, etc. begin and end?</Form.Label>
         <Row>
           <Col>
             <Form.Control
-              type="text"
-              placeholder="Type (e.g. School, Job)"
-              value={prefs.school_work?.type || ""}
-              onChange={(e) =>
-                handleChange("school_work", {
-                  ...prefs.school_work,
-                  type: e.target.value,
-                })
-              }
-            />
-          </Col>
-          <Col>
-            <Form.Control
               type="number"
-              placeholder="Hours per day"
+              placeholder="Ends"
               value={prefs.school_work?.hours || ""}
               onChange={(e) =>
                 handleChange("school_work", {
                   ...prefs.school_work,
-                  hours: e.target.value,
+                  ends: e.target.value,
                 })
               }
             />
           </Col>
         </Row>
-      </Form.Group>
+      </Form.Group> */}
 
       {/* Earliest Awake / Latest Asleep */}
       <Row>

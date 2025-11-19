@@ -153,7 +153,11 @@ export default function GroupClient({ params }: { params: Promise<{ groupId: str
 
         {/* Calendar */}
         <div>
-          <EventsCalendar groupIds={[groupId]} isCreator={group.created_by === currentUser?.id} isPersonal={false} /><br/>
+          <EventsCalendar
+            groupIds={[groupId]}
+            isCreator={group.created_by === currentUser?.id}
+            isPersonal={false} 
+            /><br/>
           <h2>Notifications</h2>
           <NotificationViewer groupIds={[groupId]}/>
         </div>

@@ -3,6 +3,7 @@ import { addEventsToPlanner, createPlanner } from "@/lib/planners";
 import { useState } from "react";
 import { Spinner } from "react-bootstrap";
 import { updateUserTokens, useUserAccount } from "@/lib/hooks/useUserAccount";
+import { UserScheduleData } from "@/components/PreferencesPopup";
 
 interface ScheduleResponse {
     message: string;
@@ -17,7 +18,7 @@ type ScheduleEvents = {
     end: string;
 }
 
-export default function CreateStudyPlan({ schedulePrefs, onSubmit, tokensLeft }: { schedulePrefs: unknown, userEvents: unknown[], onSubmit: () => void, tokensLeft: number }) {
+export default function CreateStudyPlan({ schedulePrefs, onSubmit, tokensLeft }: { schedulePrefs: UserScheduleData | undefined, userEvents: unknown[], onSubmit: () => void, tokensLeft: number }) {
     const { 
         user,
         refresh
@@ -25,6 +26,8 @@ export default function CreateStudyPlan({ schedulePrefs, onSubmit, tokensLeft }:
     const [title, setTitle] = useState('');
     const [studyArea, setStudyArea] = useState('');
     const [loading, setLoading] = useState(false);
+
+    if (schedulePrefs === undefined) return;
     
     const handleCreateStudyPlan = async (event: { preventDefault: () => void; }) => {
         // Prevents the default browser form submission, which would cause a page reload
@@ -68,17 +71,42 @@ export default function CreateStudyPlan({ schedulePrefs, onSubmit, tokensLeft }:
 
                 // Parse the successful JSON response
                 const data: ScheduleResponse = await response.json();
-                
+
                 console.log('Schedule generated successfully!', data.scheduleEvents);
                 console.log('Tokens used: ', data.usage);
 
                 const newTokenCount = tokensLeft - data.usage;
-
                 await updateUserTokens(user.id, newTokenCount);
                 console.log(`Updated user tokens: ${newTokenCount}`);
 
+                const currentYear = new Date().getFullYear();
+
+                let sessionLength: number;
+
+                if (schedulePrefs.study_session_length === null) {
+                    sessionLength = 15
+                } else {
+                    sessionLength = schedulePrefs.study_session_length;
+                }
+
+                // Fix the year on returned events
+                const fixedEvents = data.scheduleEvents.map(event => {
+                const startDate = new Date(event.start);
+                const endDate = new Date(startDate.getTime() + sessionLength * 60000);
+
+                startDate.setFullYear(currentYear);
+                endDate.setFullYear(currentYear);
+
+                return {
+                    ...event,
+                    start: startDate.toISOString(),
+                    end: endDate.toISOString(),
+                };
+                });
+
+                // Save fixed events
                 const newPlanner = await createPlanner(user.id, title);
-                await addEventsToPlanner(user.id, newPlanner.id, data.scheduleEvents);
+                await addEventsToPlanner(user.id, newPlanner.id, fixedEvents);
 
                 await refresh();
 

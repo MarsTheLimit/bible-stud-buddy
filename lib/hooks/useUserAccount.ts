@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSupabase } from '@/components/SupabaseProvider';
 import { supabase } from "@/lib/supabaseClient";
+import { UserScheduleData } from "@/components/PreferencesPopup";
 
 export type UserAccount = {
   account_type: 'free' | 'pro';
@@ -15,16 +16,6 @@ export type UserAccount = {
   tokens_left: number;
 };
 
-type SchedulePrefs = {
-  morning_person: boolean;
-  busyness: string;
-  least_busy_days: string[];
-  school_work: {type: string, hours: string} | null;
-  earliest_awake: string;
-  latest_asleep: string;
-  other_info: string;
-}
-
 const DATA_SELECTION = 'account_type, trial_ends_at, trial_used, stripe_subscription_id, stripe_customer_id, google_access_token, google_refresh_token, schedule_prefs, planners, tokens_left'
 
 // Also update the Partial type to include the new fields
@@ -33,14 +24,14 @@ type UserAccountUpdates = Partial<UserAccount & { id?: string }>;
 export function useUserAccount() {
   const { supabase, user, loading: authLoading } = useSupabase();
   const [accountData, setAccountData] = useState<UserAccount | undefined>();
-  const [schedulePrefs, setSchedulePrefs] = useState<SchedulePrefs>();
+  const [schedulePrefs, setSchedulePrefs] = useState<UserScheduleData>();
   const [planners, setPlanners] = useState<string[] | null>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   function setData(data: UserAccount) {
     setAccountData(data);
-    setSchedulePrefs(data.schedule_prefs as SchedulePrefs);
+    setSchedulePrefs(data.schedule_prefs as UserScheduleData);
     setPlanners(data.planners);
   }
 

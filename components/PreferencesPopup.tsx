@@ -2,17 +2,18 @@ import { useUserAccount } from '@/lib/hooks/useUserAccount';
 import React from 'react';
 import { Modal, Spinner } from 'react-bootstrap';
 
-interface UserScheduleData {
+export interface UserScheduleData {
   busyness: string;
   other_info: string | null;
-  school_work: {
-    type: string;
-    hours: string;
-  } | null;
-  latest_asleep: string;
-  earliest_awake: string;
+  // school_work: {
+  //   type: string;
+  //   hours: string;
+  // } | null;
+  latest_asleep: string | null;
+  earliest_awake: string | null;
   morning_person: boolean;
   least_busy_days: string[];
+  study_session_length: number | null;
 }
 
 interface JsonPopupProps {
@@ -23,7 +24,8 @@ interface JsonPopupProps {
 }
 
 export default function PreferencesPopupObject({ show, onHide, data, onEdit }: JsonPopupProps) {
-  const formatTime = (time: string) => {
+  const formatTime = (time: string | null) => {
+    if (time === null) return;
     const [hours, minutes] = time.split(':');
     if (!hours) return;
     const hour = parseInt(hours);
@@ -68,7 +70,7 @@ export default function PreferencesPopupObject({ show, onHide, data, onEdit }: J
             </div>
           </div>
 
-          {/* School/Work Info */}
+          {/* School/Work Info
           { data.school_work && (
             <div className="col-md-6">
               <div className="card border-0 shadow-sm h-100">
@@ -80,7 +82,7 @@ export default function PreferencesPopupObject({ show, onHide, data, onEdit }: J
                   <p className="mb-0 fs-5 fw-bold">{data.school_work?.hours} hours/day</p>
                 </div>
               </div>
-            </div>)}
+            </div>)} */}
 
           {/* Morning Person */}
           <div className="col-md-6">
@@ -199,11 +201,12 @@ export function PreferencesPopup({ onEdit }: {onEdit: () => void }) {
   const data: UserScheduleData = {
     busyness: schedulePrefs.busyness,
     other_info: schedulePrefs.other_info,
-    school_work: schedulePrefs.school_work,
+    // school_work: schedulePrefs.school_work,
     latest_asleep: schedulePrefs.latest_asleep,
     earliest_awake: schedulePrefs.earliest_awake,
     morning_person: schedulePrefs.morning_person,
-    least_busy_days: schedulePrefs.least_busy_days
+    least_busy_days: schedulePrefs.least_busy_days,
+    study_session_length: schedulePrefs.study_session_length
   };
 
   return (
