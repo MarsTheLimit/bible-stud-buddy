@@ -102,6 +102,7 @@ export default function GroupClient({ params }: { params: Promise<{ groupId: str
         prayerAnonymous
         );
 
+
         if (notif) {
         console.log("Prayer notification created:", notif);
         setShowPrayerModal(false);

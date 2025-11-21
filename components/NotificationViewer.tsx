@@ -2,7 +2,7 @@
 
 import { useUserAccount } from "@/lib/hooks/useUserAccount";
 import { getGroupNotifications, isUserGroupOwner } from "@/lib/notifications";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Spinner } from "react-bootstrap";
 import { supabase } from "@/lib/supabaseClient";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -39,22 +39,42 @@ export default function NotificationViewer({ groupIds }: { groupIds: string[] })
   const { supabase, user, loading } = useUserAccount();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     async function fetchNotifications() {
-      const notifications = await getGroupNotifications(supabase, groupIds);
-      console.log("Fetched notifications:", notifications);
-      setNotifications(notifications);
+      if (!groupIds || groupIds.length === 0) return;
+      
+      try {
+        const notifications = await getGroupNotifications(supabase, groupIds);
+        console.log("Fetched notifications:", notifications);
+        setNotifications(notifications);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
     }
 
-    if (!groupIds || groupIds.length === 0) return;
+    // Initial fetch
     fetchNotifications();
+
+    // Poll every 3 seconds for new notifications
+    intervalRef.current = setInterval(() => {
+      fetchNotifications();
+    }, 3000);
+
+    // Cleanup interval on unmount
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [groupIds, supabase]);
 
   async function handleDelete(id: number) {
     setDeleting(id);
     try {
       await deleteNotification(id);
+      // Immediately update local state
       setNotifications((prev) => prev.filter((n) => n.id !== id));
     } catch (err) {
       console.error(err);

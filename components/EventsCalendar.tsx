@@ -275,6 +275,7 @@ export default function EventsCalendar({
           event={selectedEvent}
           isCreator={selectedEvent ? selectedEvent.isCreator : false}
           supabase={supabase}
+          groupIds={groupIds}
           isPersonal={selectedEvent ? selectedEvent.isPersonal : false}
           isGoogle={selectedEvent ? selectedEvent.isGoogleEvent : false}
         />

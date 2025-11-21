@@ -3,7 +3,7 @@
 import { deleteEvent, Event, getGroupFromEvent } from "@/lib/groupEvents";
 import { SupabaseClient } from "@supabase/supabase-js";
 import React, { useState } from "react";
-import { createNotif } from "@/lib/notifications";
+import { createNotif, getGroupNotifications } from "@/lib/notifications";
 import { Modal, Button, Form } from "react-bootstrap";
 
 interface EventPopupProps {
@@ -12,11 +12,12 @@ interface EventPopupProps {
   event: Event | undefined;
   isCreator: boolean;
   supabase: SupabaseClient;
+  groupIds: string[];
   isPersonal: boolean;
   isGoogle: boolean;
 }
 
-export default function EventPopup({ show, onClose, event, isCreator, supabase, isPersonal = false, isGoogle = false}: EventPopupProps) {
+export default function EventPopup({ show, onClose, event, isCreator, supabase, groupIds, isPersonal = false, isGoogle = false}: EventPopupProps) {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [showNotifyPopup, setShowNotifyPopup] = useState(false);
   const [notificationDetails, setNotificationDetails] = useState("");
@@ -55,14 +56,15 @@ export default function EventPopup({ show, onClose, event, isCreator, supabase, 
     const group = await getGroupFromEvent(supabase, event.id);
     console.log("Group", group);
     await createNotif(supabase, group, event, "absent");
+    await getGroupNotifications(supabase, groupIds);
     onClose();
   }
 
   async function notifyGroup(details: string) {
     if (!event) return;
     const group = await getGroupFromEvent(supabase, event.id);
-    console.log("Group", group);
     await createNotif(supabase, group, event, "group_alert", details);
+    await getGroupNotifications(supabase, groupIds);
   }
 
   function openNotifyEventPopup() {

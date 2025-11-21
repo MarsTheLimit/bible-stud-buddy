@@ -82,7 +82,7 @@ export async function createNotif(
   if (displayNameError || !display_name) {
     console.error("Failed to get user display name:", userError);
     return null;
-  } else console.log(display_name.display_name)
+  }
 
   const user = data.user;
   const displayName = display_name.display_name;
