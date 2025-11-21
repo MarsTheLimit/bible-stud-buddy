@@ -7,6 +7,8 @@ import { Modal, Button, Form } from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { createNotif } from "@/lib/notifications";
 import NotificationViewer from "@/components/NotificationViewer";
+import { deleteGroup, leaveGroup } from "@/lib/group";
+import { LoadingSpinner } from "@/components/Loading";
 
 interface Group {
   id: string;
@@ -34,6 +36,9 @@ export default function GroupClient({ params }: { params: Promise<{ groupId: str
   const [showPrayerModal, setShowPrayerModal] = useState(false);
   const [prayerAnonymous, setPrayerAnonymous] = useState(false);
   const [prayerDetails, setPrayerDetails] = useState("");
+
+  const [deleting, setDeleting] = useState(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
 
   useEffect(() => {
     async function fetchGroup() {
@@ -116,8 +121,39 @@ export default function GroupClient({ params }: { params: Promise<{ groupId: str
     }
   }
 
-  if (loading) return <p>Loading...</p>;
+  function toggleDeletePopup() {
+    setShowDeletePopup(!showDeletePopup);
+  }
+
+  async function deleteCurrentGroup() {
+    if (!groupId) {
+      alert("Error deleting group.");
+      return;
+    }
+    if (group?.created_by !== currentUser?.id) return;
+
+    setDeleting(true);
+    await deleteGroup(supabase, groupId);
+    setDeleting(false);
+    setShowDeletePopup(false);
+
+    window.location.href = "/dashboard";
+  }
+
+  async function leaveCurrentGroup() {
+    if (!groupId) {
+      alert("Error deleting group.");
+      return;
+    }
+
+    setLoading(true);
+    await leaveGroup(supabase, groupId);
+    window.location.href = "/dashboard";
+  }
+
+  if (loading) return <LoadingSpinner text={"Loading..."} />;
   if (!group) return <p>Group not found.</p>;
+  if (deleting) return <LoadingSpinner text={"Deleting group..."} />;
 
   return (
     <div className="container py-5">
@@ -158,7 +194,14 @@ export default function GroupClient({ params }: { params: Promise<{ groupId: str
             groupIds={[groupId]}
             isCreator={group.created_by === currentUser?.id}
             isPersonal={false} 
-            /><br/>
+          /><br/>
+          { group.created_by === currentUser?.id &&(<button onClick={toggleDeletePopup} className="btn btn-outline-danger mb-4 mx-2">
+            Delete Group
+          </button>)}
+
+          { group.created_by !== currentUser?.id &&(<button onClick={leaveCurrentGroup} className="btn btn-outline-danger mb-4">
+            Leave Group
+          </button>)}
           <h2>Notifications</h2>
           <NotificationViewer groupIds={[groupId]}/>
         </div>
@@ -199,6 +242,23 @@ export default function GroupClient({ params }: { params: Promise<{ groupId: str
           </Button>
           <Button variant="outline-primary" onClick={handlePrayerSubmit}>
             Submit Prayer
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showDeletePopup} onHide={() => setShowDeletePopup(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title className="text-danger">Delete {group.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="text-muted">Deleting {group.name} cannot be undone. Be sure this is what you really want to do.</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setShowDeletePopup(false)}>
+            Cancel
+          </Button>
+          <Button variant="outline-danger" onClick={deleteCurrentGroup}>
+            Delete
           </Button>
         </Modal.Footer>
       </Modal>

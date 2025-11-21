@@ -37,7 +37,6 @@ export async function createGroup(supabase: SupabaseClient, groupName: string) {
   return group;
 }
 
-
 export async function joinGroup(supabase: SupabaseClient, joinCode: string) {
   const { data: userData } = await supabase.auth.getUser();
   const user = userData?.user;
@@ -52,7 +51,7 @@ export async function joinGroup(supabase: SupabaseClient, joinCode: string) {
     .select("*")
     .eq("join_code", joinCode)
     .single();
-
+    
   if (groupError || !group) throw new Error("Invalid join code");
 
   // Add user to group safely
@@ -122,3 +121,68 @@ export async function getUserGroups(supabase: SupabaseClient) {
   }));
 }
 
+// Leave a group (for any member)
+export async function leaveGroup(supabase: SupabaseClient, groupId: string) {
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData?.user;
+  if (!user) throw new Error("You must be logged in to leave a group.");
+
+  // Check if user is the group creator
+  const { data: group } = await supabase
+    .from("groups")
+    .select("created_by")
+    .eq("id", groupId)
+    .single();
+
+  if (group?.created_by === user.id) {
+    throw new Error("Group owners cannot leave their own group. Delete the group instead.");
+  }
+
+  // Remove user from group
+  const { error } = await supabase
+    .from("user_groups")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("group_id", groupId);
+
+  if (error) throw new Error("Failed to leave group: " + error.message);
+
+  return { success: true };
+}
+
+// Delete a group (owner only)
+export async function deleteGroup(supabase: SupabaseClient, groupId: string) {
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData?.user;
+  if (!user) throw new Error("You must be logged in to delete a group.");
+
+  // Verify user is the creator
+  const { data: group } = await supabase
+    .from("groups")
+    .select("created_by")
+    .eq("id", groupId)
+    .single();
+
+  if (!group) throw new Error("Group not found");
+  if (group.created_by !== user.id) {
+    throw new Error("Only the group owner can delete this group.");
+  }
+
+  // Delete all user-group relationships first (if not using CASCADE)
+  const { error: userGroupError } = await supabase
+    .from("user_groups")
+    .delete()
+    .eq("group_id", groupId);
+
+  if (userGroupError) throw new Error("Failed to remove group members: " + userGroupError.message);
+
+  // Delete the group
+  const { error: groupError } = await supabase
+    .from("groups")
+    .delete()
+    .eq("id", groupId);
+
+  if (groupError) throw new Error("Failed to delete group: " + groupError.message);
+
+  return { success: true };
+}

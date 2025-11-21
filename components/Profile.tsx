@@ -31,9 +31,10 @@ export default function ProfileContent({
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
             }}>
                 <div className="text-dark">
-                    <h1 className="text-gradient display-4 fw-bold mb-3">
-                        Welcome back, {displayName || 'Guest'}
+                    <h1 className="text-gradient display-4 fw-bold">
+                        Welcome back,
                     </h1>
+                    <h2 className="text-gradient mb-3">{displayName || 'Guest'}</h2>
                     <p className="mb-4 opacity-90">
                         Manage your profile and preferences
                     </p>

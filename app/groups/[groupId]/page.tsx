@@ -1,10 +1,10 @@
 export const metadata = {
-  title: "Login",
+  title: "Group",
 };
 
 import GroupClient from "./GroupClient";
 
-export default function LoginPage({ params }: { params: Promise<{ groupId: string }> }) {
+export default function GroupPage({ params }: { params: Promise<{ groupId: string }> }) {
     return <GroupClient params={params}/>;
 }
 

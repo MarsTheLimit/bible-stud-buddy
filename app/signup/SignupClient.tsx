@@ -80,7 +80,6 @@ export default function SignupClient() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
-                    <small className="text-muted">Must be at least 6 characters</small>
                   </div>
 
                   <button
