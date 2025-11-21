@@ -101,9 +101,9 @@ export default function LoginClient() {
                       <label htmlFor="password" className="form-label fw-semibold mb-0">
                         Password
                       </label>
-                      <a href="/forgot-password" className="text-decoration-none small">
+                      {/* <a href="/forgot-password" className="text-decoration-none small">
                         Forgot password?
-                      </a>
+                      </a> */}
                     </div>
                     <input
                       id="password"
