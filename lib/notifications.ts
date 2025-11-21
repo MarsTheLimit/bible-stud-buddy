@@ -73,7 +73,19 @@ export async function createNotif(
     return null;
   }
 
+  const { data: display_name, error: displayNameError } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", data.user.id)
+    .single();
+
+  if (displayNameError || !display_name) {
+    console.error("Failed to get user display name:", userError);
+    return null;
+  } else console.log(display_name.display_name)
+
   const user = data.user;
+  const displayName = display_name.display_name;
   const now = new Date().toISOString();
 
   // --- Build message content based on msg_type ---
@@ -95,7 +107,7 @@ export async function createNotif(
 
     case "prayer_req":
       msg_content = {
-        title: `${anonymous ? "Anonymous p" : "P"}rayer request for ${anonymous ? "a member" : user.email || "a member"}`,
+        title: `${anonymous ? "Anonymous p" : "P"}rayer request for ${anonymous ? "a member" : displayName || "a member"}`,
         content: details || `No details provided`,
         datetime_sent: now,
       };
@@ -104,7 +116,7 @@ export async function createNotif(
     case "absent":
       msg_content = {
         title: `${group.groups?.name} Absence`,
-        content: `${user.email || "A member"} won't be able to attend ${event?.title || "the event"}.`,
+        content: `${displayName || "A member"} won't be able to attend ${event?.title || "the event"}.`,
         datetime_sent: now,
       };
       break;

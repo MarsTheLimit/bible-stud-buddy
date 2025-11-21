@@ -23,7 +23,7 @@ export const metadata = {
     siteName: "Bible Study Buddy",
     images: [
       {
-        url: "/og-image.png",
+        url: "/dashboard-preview.png",
         width: 1200,
         height: 630,
         alt: "Bible Study Buddy preview image",

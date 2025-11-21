@@ -11,19 +11,14 @@ import NotificationViewer from "@/components/NotificationViewer";
 import EventsCalendar from "@/components/EventsCalendar";
 import ProPill from "@/components/ProPill";
 import { supabase } from "@/lib/supabaseClient";
-import { Form, Row, Col, Button, Spinner } from "react-bootstrap";
-import { PreferencesPopup, UserScheduleData } from "@/components/PreferencesPopup";
+import { Button } from "react-bootstrap";
+import { PreferencesPopup } from "@/components/PreferencesPopup";
 import CreateStudyPlan from "@/components/CreateStudyPlan";
 import PlannerViewer from "@/components/PlannerViewer";
-
-interface UserGroup {
-  id: string;
-  name: string;
-  created_by: string;
-  isCreator: boolean;
-  join_code: string;
-  user_count: number;
-}
+import { LoadingSpinner } from "@/components/Loading";
+import { UserGroup } from "@/components/Groups";
+import { PreferencesInput } from "@/components/PreferencesInput";
+import ProfileContent from "@/components/Profile";
 
 export default function DashboardClient() {
   const {
@@ -36,6 +31,7 @@ export default function DashboardClient() {
     calendarUsed,
     schedulePrefs,
     planners,
+    displayName,
     refresh
   } = useUserAccount();
   const size = useWindowSize();
@@ -43,7 +39,7 @@ export default function DashboardClient() {
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [groupIds, setGroupIds] = useState<string[]>([]);
   const [fetching, setFetching] = useState(false);
-  const [activeTab, setActiveTab] = useState<'alerts' | 'calendar' | 'chat' | 'groups'>('alerts');
+  const [activeTab, setActiveTab] = useState<'alerts' | 'calendar' | 'chat' | 'groups' | 'profiles'>('profiles');
   const [events, setEvents] = useState<unknown[]>([]);
   const [calendarKey, setCalendarKey] = useState(0); // Key to force remount calendar
 
@@ -85,17 +81,17 @@ export default function DashboardClient() {
   }, [groups]);
 
   const isLoading = loading || fetching;
+
+  async function onChangeName(newName: string) {
+    try {
+      await updateAccount({ display_name: newName });
+      await refresh();
+    } catch (err) {
+      console.error("Error changing user's name:", err)
+    }
+  }
   
   if (!loading && !user) return null;
-
-  const LoadingSpinner = ({ text }: { text: string }) => (
-    <div className="text-center py-5">
-      <Spinner animation="border" role="status" variant="primary" className="mb-3">
-        <span className="visually-hidden">Loading...</span>
-      </Spinner>
-      <p className="text-muted">{text}</p>
-    </div>
-  );
 
   const GroupsContent = () => (
     <div>
@@ -153,7 +149,7 @@ export default function DashboardClient() {
     setCalendarKey(prev => prev + 1);
   };
 
-  if (!size) return <p>ERROR ERROR ABORT ABORT</p>
+  if (!size) return null
 
   return (
     <div className={`container ${(size?.width > 900) ? ("px-5") : ("px-0")} my-5`}>
@@ -172,12 +168,12 @@ export default function DashboardClient() {
               <ul className="nav nav-tabs mb-4" role="tablist">
                 <li className="nav-item" role="presentation">
                   <button
-                    className={`nav-link ${activeTab === 'alerts' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('alerts')}
+                    className={`nav-link ${activeTab === 'profiles' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('profiles')}
                     type="button"
                     role="tab"
                   >
-                    Notifications
+                    Profile
                   </button>
                 </li>
                 <li className="nav-item" role="presentation">
@@ -188,20 +184,6 @@ export default function DashboardClient() {
                     role="tab"
                   >
                     Calendar
-                  </button>
-                </li>
-                <li className="nav-item" role="presentation">
-                  <button
-                    className={`nav-link d-flex ${activeTab === 'chat' ? 'active' : ''} ${!hasProAccess ? 'text-muted' : ''}`}
-                    onClick={() => setActiveTab('chat')}
-                    type="button"
-                    role="tab"
-                    disabled={!hasProAccess && !isLoading}
-                  >
-                    AI Planner{ !hasProAccess && !isLoading && (
-                      <div className="m-1 my-0"><ProPill accessLevel="pro" hasActiveTrial={false} /></div>
-                      
-                    )}
                   </button>
                 </li>
                 {/* Groups tab only visible on small screens */}
@@ -215,12 +197,35 @@ export default function DashboardClient() {
                     Groups
                   </button>
                 </li>
+                <li className="nav-item" role="presentation">
+                  <button
+                    className={`nav-link d-lg-none ${activeTab === 'alerts' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('alerts')}
+                    type="button"
+                    role="tab"
+                  >
+                    Notifications
+                  </button>
+                </li>
+                <li className="nav-item" role="presentation">
+                  <button
+                    className={`nav-link d-flex ${activeTab === 'chat' ? 'active' : ''} ${!hasProAccess ? 'text-muted' : ''}`}
+                    onClick={() => setActiveTab('chat')}
+                    type="button"
+                    role="tab"
+                    disabled={!hasProAccess && !isLoading}
+                  >
+                    AI Planner{ !hasProAccess && !isLoading && (
+                      <div className="m-1 my-0"><ProPill accessLevel="pro" hasActiveTrial={false} /></div>
+                    )}
+                  </button>
+                </li>
               </ul>
 
               <div className="tab-content">
                 {/* Alerts Section */}
                 <div 
-                  className={activeTab === 'alerts' ? '' : 'd-none'}
+                  className={activeTab === 'alerts' ? 'd-lg-none' : 'd-none'}
                   role="tabpanel"
                 >
                   {isLoading ? (
@@ -246,6 +251,17 @@ export default function DashboardClient() {
                       onEventAdded={handleCalendarRefresh}
                     />
                   )}
+                </div>
+
+                {/* Profile Section */}
+                <div 
+                  className={activeTab === 'profiles' ? '' : 'd-none'}
+                  role="tabpanel"
+                >
+                  <ProfileContent 
+                    displayName={displayName}
+                    onChangeName={onChangeName}
+                  />
                 </div>
 
                 {/* AI Chat Section */}
@@ -331,7 +347,6 @@ export default function DashboardClient() {
                   className={activeTab === 'groups' ? 'd-lg-none' : 'd-none'}
                   role="tabpanel"
                 >
-                  <h2>Your Groups</h2>
                   <GroupsContent />
                 </div>
               </div>
@@ -339,15 +354,24 @@ export default function DashboardClient() {
           </div>
         </div>
 
-        {/* Groups Sidebar - Only visible on large screens */}
+        {/* Groups and Notifications Sidebar - Only visible on large screens */}
         <aside className="col-lg-4 mb-4 d-none d-lg-block">
-          <div className="card overflow-hidden shadow rounded-4 border-0 sticky-top" style={{ top: '20px' }}>
+          <div className="card overflow-hidden shadow rounded-4 border-0 sticky-top mb-4" style={{ top: '20px' }}>
             <div className="card-header">
               <h2 className="h3 mb-0">Your Groups</h2>
             </div>
             <div className="card-body p-0">
               <GroupsContent />
             </div>
+          </div><div className="card overflow-hidden shadow rounded-4 border-0 sticky-top" style={{ top: '20px' }}>
+            <div className="card-header">
+              <h2 className="h3 mb-0">Notifications</h2>
+            </div>
+              {isLoading ? (
+                <LoadingSpinner text="Loading notifications..." />
+              ) : (
+                <NotificationViewer groupIds={groupIds} />
+              )}
           </div>
         </aside>
       </div>
@@ -386,186 +410,6 @@ function useWindowSize() {
   }, []); // Empty array ensures that effect is only run on mount
   return windowSize;
 }
-
-function PreferencesInput({
-  onSubmit,
-}: {
-  onSubmit: (prefs: UserScheduleData) => void;
-}) {
-  const [prefs, setPrefs] = useState<UserScheduleData>({
-    morning_person: false,
-    busyness: "",
-    least_busy_days: [], 
-    // school_work: { type: "", hours: "" },
-    earliest_awake: null,
-    latest_asleep: null,
-    other_info: null,
-    study_session_length: null
-  });
-
-  const handleChange = (field: keyof UserScheduleData, value: unknown) => {
-    const updated = { ...prefs, [field]: value };
-    setPrefs(updated);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(prefs);
-  };
-
-  return (
-    <Form className="p-3 border rounded bg-light shadow-sm" onSubmit={handleSubmit}>
-      <h4 className="mb-4 text-center">Enter Your Preferences</h4>
-      {/* Morning Person Toggle */}
-      <Form.Group className="mb-3">
-        <Form.Check
-          type="switch"
-          id="morning-person"
-          label="I'm a morning person"
-          checked={prefs.morning_person}
-          onChange={(e) => handleChange("morning_person", e.target.checked)}
-        />
-      </Form.Group>
-
-      {/* Busyness Dropdown */}
-      <Form.Group className="mb-3">
-        <Form.Label>How busy are you? <span className="text-danger">*</span></Form.Label>
-        <Form.Select
-          value={prefs.busyness}
-          onChange={(e) => handleChange("busyness", e.target.value)}
-          required
-        >
-          <option value="">Select option</option>
-          <option value="very busy">Very busy</option>
-          <option value="somewhat busy">Somewhat busy</option>
-          <option value="not busy">Not busy</option>
-          <option value="open schedule">Open schedule</option>
-        </Form.Select>
-      </Form.Group>
-      <Form.Group className="mb-3">
-        <Form.Label>How long would you like your study sessions to be (minutes)?</Form.Label>
-        <Row>
-          <Col>
-            <Form.Control
-              type="number"
-              placeholder="Ends"
-              value={prefs.study_session_length || 15}
-              onChange={(e) =>
-                handleChange("study_session_length", e.target.value)
-              }
-              required
-            />
-          </Col>
-        </Row>
-      </Form.Group>
-
-      {/* Least Busy Days (Checkboxes) */}
-      <Form.Group className="mb-3">
-        <Form.Label>Least busy days</Form.Label>
-        <div>
-          {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day) => (
-            <Form.Check
-              key={day}
-              type="checkbox"
-              id={`day-checkbox-${day}`}
-              label={day}
-              checked={prefs.least_busy_days?.includes(day) || false}
-              onChange={(e) => {
-                const isChecked = e.target.checked;
-                let updatedDays: string[] = Array.isArray(prefs.least_busy_days) 
-                  ? [...prefs.least_busy_days] 
-                  : [];
-
-                if (isChecked) {
-                  if (!updatedDays.includes(day)) {
-                    updatedDays.push(day);
-                  }
-                } else {
-                  updatedDays = updatedDays.filter((d) => d !== day);
-                }
-                
-                handleChange("least_busy_days", updatedDays.length > 0 ? updatedDays : null);
-              }}
-              inline
-            />
-          ))}
-        </div>
-      </Form.Group>
-
-      {/* School/Work Info */}
-      {/* <Form.Group className="mb-3">
-        <Form.Label>When does your School, Work, etc. begin and end?</Form.Label>
-        <Row>
-          <Col>
-            <Form.Control
-              type="number"
-              placeholder="Ends"
-              value={prefs.school_work?.hours || ""}
-              onChange={(e) =>
-                handleChange("school_work", {
-                  ...prefs.school_work,
-                  ends: e.target.value,
-                })
-              }
-            />
-          </Col>
-        </Row>
-      </Form.Group> */}
-
-      {/* Earliest Awake / Latest Asleep */}
-      <Row>
-        <Col>
-          <Form.Group className="mb-3">
-            <Form.Label>Earliest you wake up <span className="text-danger">*</span></Form.Label>
-            <Form.Control
-              type="time"
-              value={prefs.earliest_awake || ""}
-              onChange={(e) =>
-                handleChange("earliest_awake", e.target.value || null)
-              }
-              required
-            />
-          </Form.Group>
-        </Col>
-
-        <Col>
-          <Form.Group className="mb-3">
-            <Form.Label>Latest you go to sleep <span className="text-danger">*</span></Form.Label>
-            <Form.Control
-              type="time"
-              value={prefs.latest_asleep || ""}
-              onChange={(e) =>
-                handleChange("latest_asleep", e.target.value || null)
-              }
-              required
-            />
-          </Form.Group>
-        </Col>
-      </Row>
-
-      {/* Other Info */}
-      <Form.Group className="mb-3">
-        <Form.Label>Other Info</Form.Label>
-        <Form.Control
-          as="textarea"
-          rows={3}
-          placeholder="Anything else you'd like us to know?"
-          value={prefs.other_info || ""}
-          onChange={(e) => handleChange("other_info", e.target.value || null)}
-        />
-      </Form.Group>
-      
-      {/* Submit Button */}
-      <div className="d-flex justify-content-end">
-        <Button type="submit" variant="primary">
-          Save Preferences
-        </Button>
-      </div>
-
-    </Form>
-  );
-}
-
 
 async function connectGoogle() {
   const { data: { user } } = await supabase.auth.getUser();

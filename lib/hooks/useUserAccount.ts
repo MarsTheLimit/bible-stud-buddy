@@ -157,6 +157,10 @@ export function useUserAccount() {
     ? 'pro'
     : accountData?.account_type || 'free';
 
+  const displayName = (accountData?.display_name === null || accountData?.display_name === '')
+    ? user?.email
+    : accountData?.display_name
+
   const calendarUsed = getUserCalendar();
   return {
     supabase,
@@ -170,6 +174,7 @@ export function useUserAccount() {
     calendarUsed,
     schedulePrefs,
     planners,
+    displayName,
     refresh,
     updateAccount,
     upsertAccount,

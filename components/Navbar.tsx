@@ -41,9 +41,6 @@ export default function Navbar() {
                 <li className="nav-item">
                   <Link className="nav-link" href="/dashboard">Dashboard</Link>
                 </li>
-                {/* <li className="nav-item">
-                  <Link className="nav-link" href={`/profile/${user.id}`}>Profile</Link>
-                </li> */}
                 <li className="nav-item">
                   <Link className="nav-link" href="/groups">Groups</Link>
                 </li>
