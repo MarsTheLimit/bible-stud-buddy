@@ -47,7 +47,6 @@ export default function NotificationViewer({ groupIds }: { groupIds: string[] })
       
       try {
         const notifications = await getGroupNotifications(supabase, groupIds);
-        console.log("Fetched notifications:", notifications);
         setNotifications(notifications);
       } catch (error) {
         console.error("Error fetching notifications:", error);
@@ -57,10 +56,10 @@ export default function NotificationViewer({ groupIds }: { groupIds: string[] })
     // Initial fetch
     fetchNotifications();
 
-    // Poll every 3 seconds for new notifications
+    // Poll every 5 seconds for new notifications
     intervalRef.current = setInterval(() => {
       fetchNotifications();
-    }, 3000);
+    }, 5000);
 
     // Cleanup interval on unmount
     return () => {
