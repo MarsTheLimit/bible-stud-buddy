@@ -1,10 +1,12 @@
 "use client";
 
-import { deleteEvent, Event, getGroupFromEvent } from "@/lib/groupEvents";
+import { deleteEvent, Event, getGroupFromEvent, updateEvent } from "@/lib/groupEvents";
 import { SupabaseClient } from "@supabase/supabase-js";
 import React, { useState } from "react";
 import { createNotif, getGroupNotifications } from "@/lib/notifications";
 import { Modal, Button, Form } from "react-bootstrap";
+import EventInput from "./EventInput";
+import { checkValidEndDateTime } from "./EventsCalendar";
 
 interface EventPopupProps {
   show: boolean;
@@ -21,6 +23,36 @@ export default function EventPopup({ show, onClose, event, isCreator, supabase, 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [showNotifyPopup, setShowNotifyPopup] = useState(false);
   const [notificationDetails, setNotificationDetails] = useState("");
+  const [showEditPopup, setShowEditPopup] = useState(false);
+  const [editEvent, setEditEvent] = useState({
+    title: "",
+    details: "",
+    date: new Date(),
+    endDate: new Date(),
+    multiDay: false,
+    dateString: "",
+    endDateString: "",
+  });
+
+  React.useEffect(() => {
+    if (event && showEditPopup) {
+      const date = new Date(event.start);
+      const endDate = new Date(event.end);
+      const startLocalDate = date.toLocaleDateString("en-CA", { timeZone: timezone });
+      const endLocalDate = endDate.toLocaleDateString("en-CA", { timeZone: timezone });
+      const isMultiDay = startLocalDate !== endLocalDate;
+      
+      setEditEvent({
+        title: event.title,
+        details: event.description,
+        date: event.start,
+        endDate: event.end,
+        multiDay: isMultiDay,
+        dateString: event.start.toISOString(),
+        endDateString: event.end.toISOString(),
+      });
+    }
+  }, [event, showEditPopup, timezone]);
 
   if (!event || event === undefined) return null;
 
@@ -43,6 +75,12 @@ export default function EventPopup({ show, onClose, event, isCreator, supabase, 
   });
   const timeString = date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
   const endTimeString = endDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+
+  const startLocalDate = date.toLocaleDateString("en-CA", { timeZone: timezone });
+  const endLocalDate = endDate.toLocaleDateString("en-CA", { timeZone: timezone });
+
+  // Multi-day = true if the dates differ
+  const isMultiDay = startLocalDate !== endLocalDate;
 
   async function handleDeleteEvent() {
     if (!event) return;
@@ -70,6 +108,17 @@ export default function EventPopup({ show, onClose, event, isCreator, supabase, 
   function openNotifyEventPopup() {
     setShowNotifyPopup(true);
     onClose(); // close main popup
+  }
+
+  function openEditPopup() {
+    if (event === undefined) return;
+    setShowEditPopup(true);
+    onClose(); // close main popup
+  }
+
+  async function handleEditEvent() {
+    await updateEvent(supabase, event?.id, editEvent.title, editEvent.details, editEvent.dateString, editEvent.endDateString);
+    setShowEditPopup(false);
   }
 
   async function handleSendNotification() {
@@ -118,9 +167,14 @@ export default function EventPopup({ show, onClose, event, isCreator, supabase, 
           )}
 
           {(isCreator || isPersonal) && (
-            <Button variant="btn btn-outline-danger" onClick={handleDeleteEvent}>
-              Delete Event
-            </Button>
+            <>
+              <Button variant="btn btn-outline-secondary" onClick={openEditPopup}>
+                Edit
+              </Button>
+              <Button variant="btn btn-outline-danger" onClick={handleDeleteEvent}>
+                Delete
+              </Button>
+            </>
           )}
         </Modal.Footer>
       </Modal>
@@ -158,6 +212,39 @@ export default function EventPopup({ show, onClose, event, isCreator, supabase, 
             Send Notification
           </Button>
         </Modal.Footer>
+      </Modal>
+
+      {/* Creator-only Edit Event Popup */}
+      <Modal show={showEditPopup} onHide={() => setShowEditPopup(!showEditPopup)} centered>
+        <Modal.Header>
+          <h4 className="text-center text-gradient">
+            Edit {isPersonal ? "Personal" : "Group"} Event
+          </h4>
+          <button
+            onClick={() => setShowEditPopup(!showEditPopup)}
+            className="btn btn-outline-danger"
+          >
+            <i className="bi bi-x-circle"></i>
+          </button>
+        </Modal.Header>
+        <Modal.Body>
+          <EventInput
+            onChange={(title, details, date, endDate, multiDay) => setEditEvent({ title, details, date: new Date(date), endDate: new Date(endDate), multiDay, dateString: date, endDateString: endDate })}
+            initial={{
+              title: event.title,
+              description: event.description,
+              time: event.start.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timezone }),
+              endTime: event.end.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timezone }),
+              date: event.start.toLocaleDateString('en-CA', { timeZone: timezone }),
+              endDate: isMultiDay ? event.end.toLocaleDateString('en-CA', { timeZone: timezone }) : "",
+              multiDay: isMultiDay
+            }}/>
+          {checkValidEndDateTime(editEvent.dateString, editEvent.endDateString, isMultiDay) && (
+            <button onClick={handleEditEvent} className="btn btn-outline-primary">
+              Save
+            </button>
+          )}
+        </Modal.Body>
       </Modal>
     </>
   );

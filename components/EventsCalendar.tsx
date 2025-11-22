@@ -16,6 +16,22 @@ const locales: Record<string, unknown> = {
   "en-US": enUS,
 };
 
+export function checkValidEndDateTime(startDate: string, endDate: string, isMultiDay: boolean): boolean {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
+  
+  if (isMultiDay) {
+    // For multi-day: compare dates only (ignore time)
+    const startDateOnly = start.toISOString().split('T')[0];
+    const endDateOnly = end.toISOString().split('T')[0];
+    return startDateOnly! < endDateOnly!;
+  }
+  
+  // For single-day: compare full datetime (start time must be earlier than end time)
+  return start < end;
+}
+
 const LoadingSpinner = () => (
   <div className="text-center py-5">
     <Spinner animation="border" role="status" variant="primary" className="mb-3">
@@ -42,17 +58,7 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-export default function EventsCalendar({
-  groupIds,
-  isCreator,
-  isPersonal,
-  onEventAdded
-}: {
-  groupIds: string[];
-  isCreator: boolean;
-  isPersonal: boolean;
-  onEventAdded?: () => void;
-}) {
+export default function EventsCalendar({ groupIds, isCreator, isPersonal, onEventAdded }: { groupIds: string[]; isCreator: boolean; isPersonal: boolean; onEventAdded?: () => void; }) {
     const { 
         supabase,
         user, 
@@ -132,13 +138,6 @@ export default function EventsCalendar({
   const handleNavigate = (newDate: Date) => setDate(newDate);
   const handleViewChange = (newView: View) => setView(newView);
   const toggleEventShowPopup = () => setEventShowPopup(!showEventPopup);
-
-  function checkValidEndDateTime(startDate: string, endDate: string): boolean {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
-    return start < end;
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
@@ -256,11 +255,17 @@ export default function EventsCalendar({
             </Modal.Header>
             <Modal.Body>
               <EventInput
-                onChange={(title, details, date, endDate, multiDay) =>
-                  setNewEvent({ title, details, date, endDate, multiDay })
-                }
-              />
-              {checkValidEndDateTime(newEvent.date, newEvent.endDate) && (
+                onChange={(title, details, date, endDate, multiDay) => setNewEvent({ title, details, date, endDate, multiDay })}
+                initial={{
+                  title: "",
+                  description: "",
+                  time: "",
+                  endTime: "",
+                  date: "",
+                  endDate: "",
+                  multiDay: false
+                }}              />
+              {checkValidEndDateTime(newEvent.date, newEvent.endDate, newEvent.multiDay) && (
                 <button onClick={handleAddEvent} className="btn btn-outline-primary">
                   Add
                 </button>

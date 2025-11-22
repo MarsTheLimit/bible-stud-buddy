@@ -2,17 +2,29 @@
 
 import { useState } from "react";
 
-export default function EventInput({ onChange }: { onChange: (title : string, description: string, datetimeUTC: string, enddatetimeUTC: string, multiDay : boolean) => void }) {
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [time, setTime] = useState("");
-    const [endTime, setEndTime] = useState("");
-    const [date, setDate] = useState("");
-    const [endDate, setEndDate] = useState("");
-    const [multiDay, setMultiDay] = useState(false);
+type Event = {
+  title: string,
+  description: string,
+  time: string,
+  endTime: string,
+  date: string | undefined,
+  endDate: string | undefined,
+  multiDay: boolean
+}
 
-    // Whenever date/time/timezone changes, re-parse and emit standardized UTC time
-    function handleChange(d: string, t: string, ed: string, et: string) {
+export default function EventInput({ onChange, initial }: { onChange: (title : string, description: string, datetimeUTC: string, enddatetimeUTC: string, multiDay : boolean) => void, initial: Event }) {
+  const [title, setTitle] = useState(initial.title);
+  const [description, setDescription] = useState(initial.description);
+  const [time, setTime] = useState(initial.time);
+  const [endTime, setEndTime] = useState(initial.endTime);
+  const [date, setDate] = useState(initial.date);
+  const [endDate, setEndDate] = useState(initial.endDate);
+  const [multiDay, setMultiDay] = useState(initial.multiDay);
+
+  if (initial.date === undefined || initial.endDate === undefined) return null;
+
+  // Whenever date/time/timezone changes, re-parse and emit standardized UTC time
+  function handleChange(d: string | undefined, t: string, ed: string | undefined, et: string) {
     if (!d || !t) {
       onChange(title, description, "", "", multiDay);
       return;
