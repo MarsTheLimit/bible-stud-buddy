@@ -112,6 +112,28 @@ export async function createEvent(supabase : SupabaseClient, groupId: string | n
   return data;
 }
 
+export async function updateEvent(
+  supabase: SupabaseClient, 
+  eventId: string | undefined, 
+  title: string, 
+  description: string, 
+  date: string, 
+  endDate: string
+) {
+  const user = (await supabase.auth.getUser()).data.user;
+  if (!user) throw new Error("Not logged in");
+
+  const { data, error } = await supabase
+    .from("events")
+    .update({ title, description, date, end_date: endDate })
+    .eq("id", eventId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function deleteEvent(supabase : SupabaseClient, eventId: string) {
   const { error } = await supabase.from("events").delete().eq("id", eventId);
   if (error) throw error;
