@@ -107,7 +107,7 @@ export async function createNotif(
 
     case "prayer_req":
       msg_content = {
-        title: `${anonymous ? "Anonymous p" : "P"}rayer request for ${anonymous ? "a member" : displayName || "a member"}`,
+        title: `${anonymous ? "Anonymous p" : "P"}rayer request for ${anonymous ? "a member" : displayName || user.email || "a member"}`,
         content: details || `No details provided`,
         datetime_sent: now,
       };
@@ -116,7 +116,7 @@ export async function createNotif(
     case "absent":
       msg_content = {
         title: `${group.groups?.name} Absence`,
-        content: `${displayName || "A member"} won't be able to attend ${event?.title || "the event"}.`,
+        content: `${displayName || user.email || "A member"} won't be able to attend ${event?.title || "the event"}.`,
         datetime_sent: now,
       };
       break;
